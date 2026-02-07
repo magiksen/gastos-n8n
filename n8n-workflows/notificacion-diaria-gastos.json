@@ -1,0 +1,173 @@
+{
+  "name": "Notificación Diaria - Gastos",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron Diario 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.API_BASE_URL }}/api/gastos/proximos?dias=3",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Token", "value": "={{ $env.API_TOKEN }}" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-proximos",
+      "name": "API - Próximos 3 días",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.API_BASE_URL }}/api/gastos/vencidos",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Token", "value": "={{ $env.API_TOKEN }}" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-vencidos",
+      "name": "API - Vencidos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const proximos = $('API - Próximos 3 días').first().json.data || [];\nconst vencidos = $('API - Vencidos').first().json.data || [];\n\nif (proximos.length === 0 && vencidos.length === 0) {\n  return [{ json: { skip: true } }];\n}\n\nlet msg = '🔔 *Resumen diario de gastos*\\n\\n';\n\nif (vencidos.length > 0) {\n  msg += '🔴 *VENCIDOS:*\\n';\n  for (const g of vencidos) {\n    const monto = g.monto ? `$${g.monto}` : 'S/M';\n    msg += `  ⚠️ *${g.servicio}* - Día ${g.dia_pago} - ${monto} (${g.dias_vencido} días)\\n`;\n  }\n  msg += '\\n';\n}\n\nif (proximos.length > 0) {\n  msg += '🟡 *PRÓXIMOS (3 días):*\\n';\n  for (const g of proximos) {\n    const monto = g.monto ? `$${g.monto}` : 'S/M';\n    msg += `  📌 *${g.servicio}* - Día ${g.dia_pago} - ${monto}\\n`;\n  }\n}\n\nreturn [{ json: { skip: false, text: msg } }];"
+      },
+      "id": "format-resumen",
+      "name": "Formatear Resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "if-hay-notificacion",
+      "name": "¿Hay notificación?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [940, 400]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-send-resumen",
+      "name": "Enviar Resumen Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1160, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.API_BASE_URL }}/api/gastos/generar-mes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Token", "value": "={{ $env.API_TOKEN }}" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-generar-auto",
+      "name": "Auto Generar Mes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 500]
+    }
+  ],
+  "connections": {
+    "Cron Diario 8AM": {
+      "main": [
+        [
+          { "node": "Auto Generar Mes", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Auto Generar Mes": {
+      "main": [
+        [
+          { "node": "API - Próximos 3 días", "type": "main", "index": 0 },
+          { "node": "API - Vencidos", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "API - Próximos 3 días": {
+      "main": [
+        [{ "node": "Formatear Resumen", "type": "main", "index": 0 }]
+      ]
+    },
+    "API - Vencidos": {
+      "main": [
+        [{ "node": "Formatear Resumen", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatear Resumen": {
+      "main": [
+        [{ "node": "¿Hay notificación?", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Hay notificación?": {
+      "main": [
+        [{ "node": "Enviar Resumen Telegram", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "gastos" },
+    { "name": "notificaciones" }
+  ]
+}
