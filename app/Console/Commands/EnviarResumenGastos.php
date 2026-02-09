@@ -62,7 +62,8 @@ final class EnviarResumenGastos extends Command
             return self::SUCCESS;
         }
 
-        $totalPendiente = $mensuales->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
+        $totalPendienteUsd = $mensuales->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'USD')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
+        $totalPendienteBs = $mensuales->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'VES')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
 
         $destinatario = config('services.notification_email');
 
@@ -77,7 +78,8 @@ final class EnviarResumenGastos extends Command
             proximos: $proximos,
             mes: $mes,
             anio: $anio,
-            totalPendiente: $totalPendiente,
+            totalPendienteUsd: $totalPendienteUsd,
+            totalPendienteBs: $totalPendienteBs,
         ));
 
         $this->info("Resumen enviado a {$destinatario}. Vencidos: {$vencidos->count()}, Próximos: {$proximos->count()}");

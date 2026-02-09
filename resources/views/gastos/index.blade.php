@@ -29,16 +29,16 @@
             </div>
         @endif
 
-        {{-- Stats cards --}}
+        {{-- Stats cards USD --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <span class="text-sm font-bold text-blue-600">$</span>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total</p>
-                        <p class="text-xl font-bold text-slate-900">${{ number_format($total, 2) }}</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total USD</p>
+                        <p class="text-xl font-bold text-slate-900">${{ number_format($totalUsd, 2) }}</p>
                     </div>
                 </div>
             </div>
@@ -48,8 +48,8 @@
                         <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pagado</p>
-                        <p class="text-xl font-bold text-emerald-600">${{ number_format($pagado, 2) }}</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pagado USD</p>
+                        <p class="text-xl font-bold text-emerald-600">${{ number_format($pagadoUsd, 2) }}</p>
                     </div>
                 </div>
             </div>
@@ -59,23 +59,64 @@
                         <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendiente</p>
-                        <p class="text-xl font-bold text-rose-600">${{ number_format($pendiente, 2) }}</p>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendiente USD</p>
+                        <p class="text-xl font-bold text-rose-600">${{ number_format($pendienteUsd, 2) }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        {{-- Stats cards Bs --}}
+        @if($totalBs > 0)
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                            <span class="text-xs font-bold text-amber-600">Bs</span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Bs</p>
+                            <p class="text-xl font-bold text-slate-900">Bs {{ number_format($totalBs, 2) }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pagado Bs</p>
+                            <p class="text-xl font-bold text-emerald-600">Bs {{ number_format($pagadoBs, 2) }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendiente Bs</p>
+                            <p class="text-xl font-bold text-rose-600">Bs {{ number_format($pendienteBs, 2) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Progress bar --}}
-        @if($total > 0)
+        @php $totalGeneral = $totalUsd + $totalBs; $pagadoGeneral = $pagadoUsd + $pagadoBs; @endphp
+        @if($totalGeneral > 0)
             <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-medium text-slate-700">Progreso del mes</span>
-                    <span class="text-sm font-semibold text-slate-900">{{ $total > 0 ? round(($pagado / $total) * 100) : 0 }}%</span>
+                    <span class="text-sm font-semibold text-slate-900">{{ round(($mensuales->where('pagado', true)->count() / max($mensuales->count(), 1)) * 100) }}%</span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-2.5">
-                    <div class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" style="width: {{ $total > 0 ? round(($pagado / $total) * 100) : 0 }}%"></div>
+                    <div class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" style="width: {{ round(($mensuales->where('pagado', true)->count() / max($mensuales->count(), 1)) * 100) }}%"></div>
                 </div>
+                <p class="text-xs text-slate-400 mt-2">{{ $mensuales->where('pagado', true)->count() }} de {{ $mensuales->count() }} pagados</p>
             </div>
         @endif
 
@@ -93,7 +134,7 @@
                             <div class="flex items-center gap-3">
                                 <span class="text-xs text-rose-500">Dia {{ $gm->gasto->dia_pago }}</span>
                                 @if($gm->gasto->monto)
-                                    <span class="text-sm font-semibold text-rose-700">${{ number_format((float)$gm->gasto->monto, 2) }}</span>
+                                    <span class="text-sm font-semibold text-rose-700">{{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gm->gasto->monto, 2) }}</span>
                                 @endif
                             </div>
                         </div>
@@ -115,7 +156,7 @@
                             <div class="flex items-center gap-3">
                                 <span class="text-xs text-amber-500">Dia {{ $gm->gasto->dia_pago }}</span>
                                 @if($gm->gasto->monto)
-                                    <span class="text-sm font-semibold text-amber-700">${{ number_format((float)$gm->gasto->monto, 2) }}</span>
+                                    <span class="text-sm font-semibold text-amber-700">{{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gm->gasto->monto, 2) }}</span>
                                 @endif
                             </div>
                         </div>
@@ -154,14 +195,21 @@
                                     </form>
                                 </td>
                                 <td class="px-5 py-3.5">
-                                    <span class="text-sm font-medium {{ $gm->pagado ? 'text-slate-400 line-through' : 'text-slate-900' }}">{{ $gm->gasto->servicio }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-medium {{ $gm->pagado ? 'text-slate-400 line-through' : 'text-slate-900' }}">{{ $gm->gasto->servicio }}</span>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700' }}">{{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : 'USD' }}</span>
+                                    </div>
                                 </td>
                                 <td class="px-5 py-3.5 text-center">
                                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">{{ $gm->gasto->dia_pago }}</span>
                                 </td>
                                 <td class="px-5 py-3.5 text-right">
                                     <span class="text-sm font-semibold {{ $gm->pagado ? 'text-slate-400' : 'text-slate-900' }}">
-                                        {{ $gm->gasto->monto ? '$' . number_format((float)$gm->gasto->monto, 2) : '—' }}
+                                        @if($gm->gasto->monto)
+                                            {{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gm->gasto->monto, 2) }}
+                                        @else
+                                            —
+                                        @endif
                                     </span>
                                 </td>
                                 <td class="px-5 py-3.5 text-center">

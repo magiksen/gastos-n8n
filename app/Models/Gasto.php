@@ -15,6 +15,7 @@ final class Gasto extends Model
         'servicio',
         'dia_pago',
         'monto',
+        'moneda',
         'activo',
     ];
 

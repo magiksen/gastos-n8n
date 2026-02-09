@@ -20,7 +20,8 @@ final class ResumenGastosDiario extends Mailable
         public readonly Collection $proximos,
         public readonly int $mes,
         public readonly int $anio,
-        public readonly float $totalPendiente,
+        public readonly float $totalPendienteUsd,
+        public readonly float $totalPendienteBs,
     ) {}
 
     public function envelope(): Envelope

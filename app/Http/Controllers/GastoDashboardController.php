@@ -28,9 +28,13 @@ final class GastoDashboardController extends Controller
             ->sortBy(fn (GastoMensual $gm) => $gm->gasto->dia_pago)
             ->values();
 
-        $total = $mensuales->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
-        $pagado = $mensuales->where('pagado', true)->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
-        $pendiente = $total - $pagado;
+        $totalUsd = $mensuales->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'USD')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
+        $pagadoUsd = $mensuales->where('pagado', true)->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'USD')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
+        $pendienteUsd = $totalUsd - $pagadoUsd;
+
+        $totalBs = $mensuales->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'VES')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
+        $pagadoBs = $mensuales->where('pagado', true)->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'VES')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
+        $pendienteBs = $totalBs - $pagadoBs;
 
         $hoy = Carbon::now();
         $diaActual = $hoy->day;
@@ -65,7 +69,8 @@ final class GastoDashboardController extends Controller
         ];
 
         return view('gastos.index', compact(
-            'mensuales', 'total', 'pagado', 'pendiente',
+            'mensuales', 'totalUsd', 'pagadoUsd', 'pendienteUsd',
+            'totalBs', 'pagadoBs', 'pendienteBs',
             'proximos', 'vencidos', 'mes', 'anio', 'meses'
         ));
     }
@@ -83,6 +88,7 @@ final class GastoDashboardController extends Controller
             'servicio' => 'required|string|max:255',
             'dia_pago' => 'required|integer|min:1|max:31',
             'monto' => 'nullable|numeric|min:0',
+            'moneda' => 'required|in:USD,VES',
         ]);
 
         Gasto::create($validated);
@@ -97,6 +103,7 @@ final class GastoDashboardController extends Controller
             'servicio' => 'required|string|max:255',
             'dia_pago' => 'required|integer|min:1|max:31',
             'monto' => 'nullable|numeric|min:0',
+            'moneda' => 'required|in:USD,VES',
         ]);
 
         $gasto->update($validated);

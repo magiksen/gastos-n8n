@@ -47,9 +47,16 @@
                         class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5" value="{{ old('dia_pago') }}">
                 </div>
                 <div class="w-full sm:w-32">
-                    <label for="monto" class="block text-sm font-medium text-slate-700 mb-1.5">Monto ($)</label>
+                    <label for="monto" class="block text-sm font-medium text-slate-700 mb-1.5">Monto</label>
                     <input type="number" name="monto" id="monto" step="0.01" min="0" placeholder="0.00"
                         class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5" value="{{ old('monto') }}">
+                </div>
+                <div class="w-full sm:w-28">
+                    <label for="moneda" class="block text-sm font-medium text-slate-700 mb-1.5">Moneda</label>
+                    <select name="moneda" id="moneda" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5">
+                        <option value="USD" {{ old('moneda') === 'VES' ? '' : 'selected' }}>$ USD</option>
+                        <option value="VES" {{ old('moneda') === 'VES' ? 'selected' : '' }}>Bs</option>
+                    </select>
                 </div>
                 <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 transition-colors shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
@@ -86,6 +93,7 @@
                                             <span class="text-xs font-bold text-slate-500">{{ strtoupper(substr($gasto->servicio, 0, 2)) }}</span>
                                         </div>
                                         <span class="text-sm font-medium text-slate-900">{{ $gasto->servicio }}</span>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {{ ($gasto->moneda ?? 'USD') === 'VES' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700' }}">{{ ($gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : 'USD' }}</span>
                                     </div>
                                 </td>
                                 <td class="px-5 py-3.5 text-center">
@@ -93,7 +101,11 @@
                                 </td>
                                 <td class="px-5 py-3.5 text-right">
                                     <span class="text-sm font-semibold text-slate-900">
-                                        {{ $gasto->monto ? '$' . number_format((float)$gasto->monto, 2) : '—' }}
+                                        @if($gasto->monto)
+                                            {{ ($gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gasto->monto, 2) }}
+                                        @else
+                                            —
+                                        @endif
                                     </span>
                                 </td>
                                 <td class="px-5 py-3.5 text-center">
@@ -145,6 +157,13 @@
                                         <div class="w-full sm:w-28">
                                             <label class="block text-xs font-medium text-slate-500 mb-1">Monto</label>
                                             <input type="number" name="monto" value="{{ $gasto->monto }}" step="0.01" min="0" class="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-emerald-500/20 focus:border-emerald-500 py-2">
+                                        </div>
+                                        <div class="w-full sm:w-24">
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Moneda</label>
+                                            <select name="moneda" class="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-emerald-500/20 focus:border-emerald-500 py-2">
+                                                <option value="USD" {{ ($gasto->moneda ?? 'USD') === 'USD' ? 'selected' : '' }}>$ USD</option>
+                                                <option value="VES" {{ ($gasto->moneda ?? 'USD') === 'VES' ? 'selected' : '' }}>Bs</option>
+                                            </select>
                                         </div>
                                         <div class="flex items-center gap-2 shrink-0">
                                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 transition-colors">

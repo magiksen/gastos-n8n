@@ -37,7 +37,7 @@
                 <tr>
                     <td style="text-align:center; background:#f9fafb; border-radius:6px; padding:12px;">
                         <div style="font-size:12px; color:#6b7280; text-transform:uppercase;">Pendiente</div>
-                        <div style="font-size:20px; font-weight:700; color:#dc2626; margin-top:4px;">${{ number_format($totalPendiente, 2) }}</div>
+                        <div style="font-size:20px; font-weight:700; color:#dc2626; margin-top:4px;">{{ $totalPendienteUsd > 0 ? '$' . number_format($totalPendienteUsd, 2) : '' }}{{ $totalPendienteUsd > 0 && $totalPendienteBs > 0 ? ' + ' : '' }}{{ $totalPendienteBs > 0 ? 'Bs ' . number_format($totalPendienteBs, 2) : '' }}</div>
                     </td>
                 </tr>
             </table>
@@ -49,7 +49,7 @@
                         <div class="item">
                             <strong>{{ $gm->gasto->servicio }}</strong>
                             — Dia {{ $gm->gasto->dia_pago }}
-                            @if($gm->gasto->monto) — ${{ number_format((float)$gm->gasto->monto, 2) }} @endif
+                            @if($gm->gasto->monto) — {{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gm->gasto->monto, 2) }} @endif
                         </div>
                     @endforeach
                 </div>
@@ -62,7 +62,7 @@
                         <div class="item">
                             <strong>{{ $gm->gasto->servicio }}</strong>
                             — Dia {{ $gm->gasto->dia_pago }}
-                            @if($gm->gasto->monto) — ${{ number_format((float)$gm->gasto->monto, 2) }} @endif
+                            @if($gm->gasto->monto) — {{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gm->gasto->monto, 2) }} @endif
                         </div>
                     @endforeach
                 </div>
