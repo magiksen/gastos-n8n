@@ -1,16 +1,24 @@
-# Gastos n8n - Automatizacion de Gastos con Telegram
+# Gastos App - Control de Gastos Mensuales
 
-Sistema de gestion de gastos mensuales con bot de Telegram via n8n.
+Sistema web para gestionar gastos mensuales con interfaz visual, autenticacion y notificaciones por email.
 
-## Arquitectura
+## Funcionalidades
 
-```
-Telegram Bot <-> n8n Workflows <-> Laravel API <-> SQLite/MySQL
-```
+- **Dashboard mensual** — Resumen de totales (total, pagado, pendiente) + tabla de gastos
+- **Marcar pagado/pendiente** — Un clic para cambiar el estado
+- **Subir comprobantes** — Sube capturas de pago (imagenes)
+- **Gestion de servicios** — Agrega, edita y elimina gastos fijos
+- **Generacion automatica** — Al entrar a un mes nuevo, se crean los gastos automaticamente
+- **Alertas visuales** — Pagos vencidos (rojo) y proximos en 3 dias (amarillo)
+- **Email diario (8 AM)** — Resumen de pagos vencidos y proximos
+- **Login seguro** — Un solo usuario, registro deshabilitado
 
-- **Laravel API**: Backend REST para CRUD de gastos y tracking mensual
-- **n8n Workflows**: Bot de Telegram + notificaciones automaticas
-- **Base de datos**: SQLite (default) o MySQL
+## Stack
+
+- **Laravel 11** + PHP 8.3
+- **Blade** + Tailwind CSS (via Breeze)
+- **SQLite** (default)
+- **Docker** + Nginx + Supervisor + Cron
 
 ## Estructura de la Base de Datos
 
@@ -33,9 +41,64 @@ Telegram Bot <-> n8n Workflows <-> Laravel API <-> SQLite/MySQL
 | comprobante_path | string | Ruta del comprobante |
 | notas | text | Notas adicionales |
 
-## API Endpoints
+## Desarrollo Local
 
-Todos los endpoints requieren header `X-API-Token` o query param `api_token`.
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+npm run build
+php artisan serve
+```
+
+Credenciales por defecto: `admin@gastos.app` / `password`
+
+## Despliegue en VPS con Docker
+
+Ver la guia completa paso a paso en [GUIA-INSTALACION-VPS.md](GUIA-INSTALACION-VPS.md).
+
+Resumen rapido:
+
+```bash
+docker build -t gastos-app .
+docker run -d --name gastos-app --restart unless-stopped \
+  -p 127.0.0.1:8080:80 \
+  -e APP_ENV=production \
+  -e APP_URL=https://tu-dominio.com \
+  -e ADMIN_EMAIL=tu@email.com \
+  -e ADMIN_PASSWORD=tu-password \
+  -e NOTIFICATION_EMAIL=tu@email.com \
+  -e MAIL_HOST=smtp.gmail.com \
+  -e MAIL_PORT=587 \
+  -e MAIL_USERNAME=tu@gmail.com \
+  -e MAIL_PASSWORD=tu-app-password \
+  -v gastos-data:/var/www/html/database \
+  -v gastos-storage:/var/www/html/storage \
+  gastos-app
+docker exec gastos-app php artisan db:seed --force
+```
+
+## Variables de Entorno
+
+| Variable | Descripcion | Ejemplo |
+|----------|-------------|---------|
+| `ADMIN_EMAIL` | Email del usuario admin | `admin@gastos.app` |
+| `ADMIN_PASSWORD` | Password del admin | `password` |
+| `ADMIN_NAME` | Nombre del admin | `Admin` |
+| `NOTIFICATION_EMAIL` | Email destino de notificaciones | `tu@email.com` |
+| `MAIL_MAILER` | Driver de correo | `smtp` |
+| `MAIL_HOST` | Servidor SMTP | `smtp.gmail.com` |
+| `MAIL_PORT` | Puerto SMTP | `587` |
+| `MAIL_USERNAME` | Usuario SMTP | `tu@gmail.com` |
+| `MAIL_PASSWORD` | Password SMTP | `app-password` |
+| `API_TOKEN` | Token para API REST (opcional) | `openssl rand -hex 32` |
+
+## API REST (opcional)
+
+La API REST sigue disponible para integraciones externas. Requiere header `X-API-Token`.
 
 | Metodo | Endpoint | Descripcion |
 |--------|----------|-------------|
@@ -45,130 +108,6 @@ Todos los endpoints requieren header `X-API-Token` o query param `api_token`.
 | GET | `/api/gastos/mensuales?mes=X&anio=Y` | Ver gastos del mes |
 | POST | `/api/gastos/generar-mes` | Generar entries del mes |
 | PUT | `/api/gastos/mensuales/{id}/pagar` | Marcar como pagado |
-| PUT | `/api/gastos/mensuales/{id}/no-pagar` | Desmarcar pagado |
 | POST | `/api/gastos/mensuales/{id}/comprobante` | Subir comprobante |
 | GET | `/api/gastos/proximos?dias=3` | Pagos proximos |
 | GET | `/api/gastos/vencidos` | Pagos vencidos |
-| GET | `/api/gastos/buscar?nombre=X` | Buscar por nombre |
-
-## Comandos de Telegram
-
-| Comando | Descripcion |
-|---------|-------------|
-| `/ver` | Ver lista de gastos del mes actual |
-| `/agregar Servicio,dia,monto` | Agregar un nuevo gasto |
-| `/quitar Servicio` | Eliminar un gasto |
-| `/pagar Servicio` | Marcar gasto como pagado |
-| `/pendientes` | Ver pagos proximos (5 dias) |
-| `/generar` | Generar gastos del mes actual |
-| `/help` o `/start` | Ver comandos disponibles |
-| Enviar foto con caption `/comprobante Servicio` | Subir comprobante |
-
-## Instalacion en Servidor (EasyPanel)
-
-### 1. Configurar Laravel API
-
-```bash
-# Clonar o subir el proyecto al servidor
-git clone <tu-repo> /app/gastos-n8n
-
-# Instalar dependencias
-composer install --no-dev --optimize-autoloader
-
-# Copiar y configurar .env
-cp .env.example .env
-php artisan key:generate
-
-# Configurar en .env:
-# APP_URL=https://tu-dominio.com
-# API_TOKEN=un-token-seguro-generado (genera uno con: openssl rand -hex 32)
-# DB_CONNECTION=sqlite (o mysql si prefieres)
-
-# Ejecutar migraciones y seeders
-php artisan migrate --force
-php artisan db:seed
-
-# Link de storage para comprobantes
-php artisan storage:link
-
-# Optimizar
-php artisan config:cache
-php artisan route:cache
-```
-
-### 2. Crear Bot de Telegram
-
-1. Habla con [@BotFather](https://t.me/BotFather) en Telegram
-2. Envia `/newbot` y sigue las instrucciones
-3. Guarda el **token del bot**
-4. Configura los comandos con `/setcommands`:
-   ```
-   ver - Ver lista de gastos del mes
-   agregar - Agregar gasto (Servicio,dia,monto)
-   quitar - Eliminar un gasto
-   pagar - Marcar gasto como pagado
-   pendientes - Ver pagos proximos
-   generar - Generar gastos del mes
-   help - Ver ayuda
-   ```
-5. Obten tu **Chat ID**: habla con [@userinfobot](https://t.me/userinfobot)
-
-### 3. Configurar n8n
-
-#### Variables de entorno en n8n:
-
-Configura estas variables en Settings > Variables de tu n8n:
-
-| Variable | Valor |
-|----------|-------|
-| `API_BASE_URL` | `https://tu-dominio-laravel.com` |
-| `API_TOKEN` | El mismo token que pusiste en Laravel `.env` |
-| `TELEGRAM_CHAT_ID` | Tu Chat ID de Telegram |
-
-#### Credenciales de Telegram:
-
-1. Ve a **Credentials** en n8n
-2. Crea una nueva credencial de tipo **Telegram API**
-3. Pega el token del bot de BotFather
-4. Nombra la credencial "Telegram Bot"
-
-#### Importar Workflows:
-
-1. Ve a **Workflows** en n8n
-2. Importa `n8n-workflows/telegram-bot-gastos.json`
-3. Importa `n8n-workflows/notificacion-diaria-gastos.json`
-4. En cada workflow:
-   - Actualiza las credenciales de Telegram en cada nodo que lo requiera
-   - Activa el workflow
-
-### 4. Verificar
-
-1. Abre el chat con tu bot en Telegram
-2. Envia `/start` - deberia responder con el menu de comandos
-3. Envia `/ver` - deberia mostrar la lista de gastos del mes
-4. Envia `/pendientes` - deberia mostrar pagos proximos
-
-## Flujo de Uso Mensual
-
-1. **Inicio de mes**: El workflow diario auto-genera las entradas del mes nuevo
-2. **Cada manana (8 AM)**: Recibes notificacion de pagos vencidos y proximos
-3. **Al pagar**: Envia `/pagar Netflix` para marcar como pagado
-4. **Comprobante**: Envia foto con caption `/comprobante Netflix`
-5. **Revisar**: Envia `/ver` para ver el estado actual
-
-## Desarrollo Local
-
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan db:seed
-php artisan serve
-```
-
-Probar API:
-```bash
-curl -H "X-API-Token: changeme" http://localhost:8000/api/gastos
-curl -H "X-API-Token: changeme" http://localhost:8000/api/gastos/mensuales
-```

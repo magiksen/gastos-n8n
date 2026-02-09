@@ -1,3 +1,11 @@
+# Stage 1: Build frontend assets
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package.json package-lock.json vite.config.js tailwind.config.js postcss.config.js ./
+COPY resources/ resources/
+RUN npm ci && npm run build
+
+# Stage 2: PHP application
 FROM php:8.3-fpm-alpine AS base
 
 # Install system dependencies
@@ -11,6 +19,7 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     sqlite-dev \
+    dcron \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_sqlite pdo_mysql mbstring exif pcntl bcmath gd zip
 
@@ -28,6 +37,9 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 # Copy the rest of the application
 COPY . .
+
+# Copy built frontend assets from stage 1
+COPY --from=frontend /app/public/build public/build
 
 # Complete composer install
 RUN composer dump-autoload --optimize \
@@ -55,6 +67,9 @@ COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Cron for Laravel scheduler
+RUN echo "* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1" | crontab -
 
 # Entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh

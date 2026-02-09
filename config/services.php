@@ -37,4 +37,6 @@ return [
 
     'api_token' => env('API_TOKEN', 'changeme'),
 
+    'notification_email' => env('NOTIFICATION_EMAIL'),
+
 ];
