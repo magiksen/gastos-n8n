@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Gasto;
 use App\Models\GastoMensual;
+use App\Services\BcvService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,10 @@ use Illuminate\View\View;
 
 final class GastoDashboardController extends Controller
 {
+    public function __construct(
+        private readonly BcvService $bcvService,
+    ) {}
+
     public function index(Request $request): View
     {
         $mes = (int) $request->query('mes', (string) Carbon::now()->month);
@@ -68,18 +73,21 @@ final class GastoDashboardController extends Controller
             9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
         ];
 
+        $tasaBcv = $this->bcvService->obtenerTasaUsd();
+
         return view('gastos.index', compact(
             'mensuales', 'totalUsd', 'pagadoUsd', 'pendienteUsd',
             'totalBs', 'pagadoBs', 'pendienteBs',
-            'proximos', 'vencidos', 'mes', 'anio', 'meses'
+            'proximos', 'vencidos', 'mes', 'anio', 'meses', 'tasaBcv'
         ));
     }
 
     public function servicios(): View
     {
         $gastos = Gasto::orderBy('dia_pago')->get();
+        $tasaBcv = $this->bcvService->obtenerTasaUsd();
 
-        return view('gastos.servicios', compact('gastos'));
+        return view('gastos.servicios', compact('gastos', 'tasaBcv'));
     }
 
     public function store(Request $request): RedirectResponse

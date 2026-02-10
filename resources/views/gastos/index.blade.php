@@ -29,6 +29,22 @@
             </div>
         @endif
 
+        {{-- BCV Rate banner --}}
+        @if($tasaBcv)
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Tasa BCV</p>
+                        <p class="text-lg font-bold text-white">Bs {{ number_format($tasaBcv, 2) }} <span class="text-xs text-slate-400 font-normal">/ USD</span></p>
+                    </div>
+                </div>
+                <span class="text-[10px] text-slate-500 uppercase tracking-wider">Fuente: bcv.org.ve</span>
+            </div>
+        @endif
+
         {{-- Stats cards USD --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
@@ -76,7 +92,10 @@
                         </div>
                         <div>
                             <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Bs</p>
-                            <p class="text-xl font-bold text-slate-900">Bs {{ number_format($totalBs, 2) }}</p>
+                            <p class="text-xl font-bold text-slate-900">${{ number_format($totalBs, 2) }}</p>
+                            @if($tasaBcv)
+                                <p class="text-xs text-amber-600 font-medium">= Bs {{ number_format($totalBs * $tasaBcv, 2) }}</p>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -87,7 +106,10 @@
                         </div>
                         <div>
                             <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pagado Bs</p>
-                            <p class="text-xl font-bold text-emerald-600">Bs {{ number_format($pagadoBs, 2) }}</p>
+                            <p class="text-xl font-bold text-emerald-600">${{ number_format($pagadoBs, 2) }}</p>
+                            @if($tasaBcv)
+                                <p class="text-xs text-emerald-500 font-medium">= Bs {{ number_format($pagadoBs * $tasaBcv, 2) }}</p>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -98,7 +120,10 @@
                         </div>
                         <div>
                             <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pendiente Bs</p>
-                            <p class="text-xl font-bold text-rose-600">Bs {{ number_format($pendienteBs, 2) }}</p>
+                            <p class="text-xl font-bold text-rose-600">${{ number_format($pendienteBs, 2) }}</p>
+                            @if($tasaBcv)
+                                <p class="text-xs text-rose-500 font-medium">= Bs {{ number_format($pendienteBs * $tasaBcv, 2) }}</p>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -204,13 +229,18 @@
                                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">{{ $gm->gasto->dia_pago }}</span>
                                 </td>
                                 <td class="px-5 py-3.5 text-right">
-                                    <span class="text-sm font-semibold {{ $gm->pagado ? 'text-slate-400' : 'text-slate-900' }}">
-                                        @if($gm->gasto->monto)
-                                            {{ ($gm->gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gm->gasto->monto, 2) }}
-                                        @else
-                                            —
+                                    <div>
+                                        <span class="text-sm font-semibold {{ $gm->pagado ? 'text-slate-400' : 'text-slate-900' }}">
+                                            @if($gm->gasto->monto)
+                                                ${{ number_format((float)$gm->gasto->monto, 2) }}
+                                            @else
+                                                —
+                                            @endif
+                                        </span>
+                                        @if($gm->gasto->monto && ($gm->gasto->moneda ?? 'USD') === 'VES' && $tasaBcv)
+                                            <p class="text-[11px] text-amber-600 font-medium">Bs {{ number_format((float)$gm->gasto->monto * $tasaBcv, 2) }}</p>
                                         @endif
-                                    </span>
+                                    </div>
                                 </td>
                                 <td class="px-5 py-3.5 text-center">
                                     <span class="text-sm text-slate-400">

@@ -100,13 +100,18 @@
                                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">{{ $gasto->dia_pago }}</span>
                                 </td>
                                 <td class="px-5 py-3.5 text-right">
-                                    <span class="text-sm font-semibold text-slate-900">
-                                        @if($gasto->monto)
-                                            {{ ($gasto->moneda ?? 'USD') === 'VES' ? 'Bs' : '$' }} {{ number_format((float)$gasto->monto, 2) }}
-                                        @else
-                                            —
+                                    <div>
+                                        <span class="text-sm font-semibold text-slate-900">
+                                            @if($gasto->monto)
+                                                ${{ number_format((float)$gasto->monto, 2) }}
+                                            @else
+                                                —
+                                            @endif
+                                        </span>
+                                        @if($gasto->monto && ($gasto->moneda ?? 'USD') === 'VES' && $tasaBcv)
+                                            <p class="text-[11px] text-amber-600 font-medium">Bs {{ number_format((float)$gasto->monto * $tasaBcv, 2) }}</p>
                                         @endif
-                                    </span>
+                                    </div>
                                 </td>
                                 <td class="px-5 py-3.5 text-center">
                                     @if($gasto->activo)
