@@ -13,6 +13,7 @@ Route::middleware('api.token')->prefix('gastos')->group(function () {
     Route::get('/', [GastoController::class, 'index']);
     Route::post('/', [GastoController::class, 'store']);
     Route::delete('/{id}', [GastoController::class, 'destroy']);
+    Route::patch('/{id}/toggle-activo', [GastoController::class, 'toggleActivo']);
 
     Route::get('/mensuales', [GastoController::class, 'mensuales']);
     Route::post('/generar-mes', [GastoController::class, 'generarMes']);

@@ -55,6 +55,20 @@ final class GastoController extends Controller
         ]);
     }
 
+    public function toggleActivo(int $id): JsonResponse
+    {
+        $gasto = Gasto::findOrFail($id);
+        $gasto->update(['activo' => ! $gasto->activo]);
+
+        $estado = $gasto->activo ? 'activado' : 'desactivado';
+
+        return response()->json([
+            'success' => true,
+            'message' => "Gasto '{$gasto->servicio}' {$estado} correctamente.",
+            'data' => $gasto,
+        ]);
+    }
+
     public function mensuales(Request $request): JsonResponse
     {
         $mes = (int) $request->query('mes', (string) Carbon::now()->month);

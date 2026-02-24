@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/servicios', [GastoDashboardController::class, 'store'])->name('gastos.store');
     Route::put('/servicios/{gasto}', [GastoDashboardController::class, 'update'])->name('gastos.update');
     Route::delete('/servicios/{gasto}', [GastoDashboardController::class, 'destroy'])->name('gastos.destroy');
+    Route::patch('/servicios/{gasto}/toggle-activo', [GastoDashboardController::class, 'toggleActivo'])->name('gastos.toggle-activo');
 
     Route::post('/gastos/{mensual}/toggle', [GastoDashboardController::class, 'togglePagado'])->name('gastos.toggle');
     Route::post('/gastos/{mensual}/comprobante', [GastoDashboardController::class, 'subirComprobante'])->name('gastos.comprobante');

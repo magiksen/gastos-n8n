@@ -129,6 +129,16 @@ final class GastoDashboardController extends Controller
             ->with('success', "Servicio '{$nombre}' eliminado.");
     }
 
+    public function toggleActivo(Gasto $gasto): RedirectResponse
+    {
+        $gasto->update(['activo' => ! $gasto->activo]);
+
+        $estado = $gasto->activo ? 'activado' : 'desactivado';
+
+        return redirect()->route('gastos.servicios')
+            ->with('success', "Servicio '{$gasto->servicio}' {$estado}.");
+    }
+
     public function togglePagado(GastoMensual $mensual): RedirectResponse
     {
         $mensual->update([
