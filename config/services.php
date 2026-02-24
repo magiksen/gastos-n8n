@@ -35,7 +35,7 @@ return [
         ],
     ],
 
-    'api_token' => env('API_TOKEN', 'changeme'),
+    'api_token' => env('API_TOKEN'),
 
     'notification_email' => env('NOTIFICATION_EMAIL'),
 

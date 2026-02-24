@@ -12,9 +12,11 @@ final class VerifyApiToken
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->header('X-API-Token') ?? $request->query('api_token');
+        $token = $request->header('X-API-Token');
 
-        if (! $token || $token !== config('services.api_token')) {
+        $expected = (string) config('services.api_token', '');
+
+        if (! $token || ! $expected || ! hash_equals($expected, $token)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Token de API inválido.',

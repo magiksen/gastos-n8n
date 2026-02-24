@@ -155,7 +155,7 @@ final class GastoDashboardController extends Controller
     public function subirComprobante(Request $request, GastoMensual $mensual): RedirectResponse
     {
         $request->validate([
-            'comprobante' => 'required|image|max:5120',
+            'comprobante' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         if ($mensual->comprobante_path) {
