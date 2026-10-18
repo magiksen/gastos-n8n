@@ -24,8 +24,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/gastos/{mensual}/toggle', [GastoDashboardController::class, 'togglePagado'])->name('gastos.toggle');
     Route::post('/gastos/{mensual}/comprobante', [GastoDashboardController::class, 'subirComprobante'])->name('gastos.comprobante');
     Route::get('/gastos/{mensual}/comprobante', [GastoDashboardController::class, 'verComprobante'])->name('gastos.ver-comprobante');
-    Route::patch('/gastos/{mensual}/metodo-pago', [GastoDashboardController::class, 'actualizarMetodoPago'])->name('gastos.metodo-pago');
-
     Route::get('/metodos-pago', [MetodoPagoController::class, 'index'])->name('metodos-pago.index');
     Route::post('/metodos-pago', [MetodoPagoController::class, 'store'])->name('metodos-pago.store');
     Route::put('/metodos-pago/{metodoPago}', [MetodoPagoController::class, 'update'])->name('metodos-pago.update');

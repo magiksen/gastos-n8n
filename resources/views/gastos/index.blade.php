@@ -266,13 +266,12 @@
                                     </span>
                                 </td>
                                 <td class="px-5 py-3.5">
-                                    <form method="POST" action="{{ route('gastos.metodo-pago', $gm) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <x-metodo-pago-select :metodos="$metodosPago" :selected="$gm->metodoPagoAplicado()?->id"
-                                            onchange="this.form.submit()" aria-label="Método de pago de {{ $gm->gasto->servicio }}"
-                                            class="w-full min-w-36 rounded-lg border-slate-200 bg-white text-xs text-slate-700 focus:ring-emerald-500/20 focus:border-emerald-500 py-1.5" />
-                                    </form>
+                                    @php $metodoPago = $gm->metodoPagoAplicado(); @endphp
+                                    @if($metodoPago)
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium {{ $gm->pagado ? 'bg-slate-100 text-slate-400' : 'bg-slate-100 text-slate-700' }}">{{ $metodoPago->nombre }}</span>
+                                    @else
+                                        <span class="text-sm text-slate-400">—</span>
+                                    @endif
                                 </td>
                                 <td class="px-5 py-3.5 text-center">
                                     <div class="flex items-center justify-center gap-2">

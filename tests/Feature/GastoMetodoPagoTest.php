@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 final class GastoMetodoPagoTest extends TestCase
@@ -93,42 +94,62 @@ final class GastoMetodoPagoTest extends TestCase
         $this->assertSame($metodo->id, $mensual->metodo_pago_id);
     }
 
-    public function test_marking_paid_keeps_metodo_pago_chosen_for_that_month(): void
+    public function test_marking_paid_again_uses_current_service_metodo_pago(): void
     {
-        $habitual = MetodoPago::factory()->create();
-        $elegido = MetodoPago::factory()->create();
+        $anterior = MetodoPago::factory()->create();
+        $actual = MetodoPago::factory()->create();
         $mensual = GastoMensual::factory()
-            ->for(Gasto::factory()->state(['metodo_pago_id' => $habitual->id]))
-            ->create(['metodo_pago_id' => $elegido->id]);
+            ->for(Gasto::factory()->state(['metodo_pago_id' => $actual->id]))
+            ->create(['metodo_pago_id' => $anterior->id]);
 
         $this->actingAs($this->user)->post(route('gastos.toggle', $mensual));
 
-        $this->assertSame($elegido->id, $mensual->fresh()->metodo_pago_id);
+        $this->assertSame($actual->id, $mensual->fresh()->metodo_pago_id);
     }
 
-    public function test_metodo_pago_of_monthly_payment_can_be_changed(): void
+    public function test_unmarking_paid_clears_metodo_pago_of_that_month(): void
     {
         $metodo = MetodoPago::factory()->create();
-        $mensual = GastoMensual::factory()->create();
+        $mensual = GastoMensual::factory()
+            ->for(Gasto::factory()->state(['metodo_pago_id' => $metodo->id]))
+            ->create(['pagado' => true, 'metodo_pago_id' => $metodo->id]);
 
-        $this->actingAs($this->user)
-            ->from(route('gastos.index'))
-            ->patch(route('gastos.metodo-pago', $mensual), ['metodo_pago_id' => $metodo->id])
-            ->assertRedirect(route('gastos.index'))
-            ->assertSessionHas('success');
+        $this->actingAs($this->user)->post(route('gastos.toggle', $mensual));
 
-        $this->assertSame($metodo->id, $mensual->fresh()->metodo_pago_id);
+        $mensual->refresh();
+        $this->assertFalse($mensual->pagado);
+        $this->assertNull($mensual->metodo_pago_id);
     }
 
-    public function test_monthly_payment_rejects_nonexistent_metodo_pago(): void
+    public function test_paid_month_keeps_metodo_pago_used_when_service_changes(): void
     {
-        $mensual = GastoMensual::factory()->create();
+        $usado = MetodoPago::factory()->create(['nombre' => 'Zelle']);
+        $nuevo = MetodoPago::factory()->create(['nombre' => 'Binance']);
+        GastoMensual::factory()
+            ->for(Gasto::factory()->state(['servicio' => 'Netflix', 'metodo_pago_id' => $nuevo->id]))
+            ->create(['pagado' => true, 'metodo_pago_id' => $usado->id]);
 
         $this->actingAs($this->user)
-            ->patch(route('gastos.metodo-pago', $mensual), ['metodo_pago_id' => 999])
-            ->assertSessionHasErrors('metodo_pago_id');
+            ->get(route('gastos.index'))
+            ->assertOk()
+            ->assertSee('Zelle')
+            ->assertDontSee('Binance');
+    }
 
-        $this->assertNull($mensual->fresh()->metodo_pago_id);
+    public function test_monthly_view_shows_metodo_pago_as_read_only(): void
+    {
+        $metodo = MetodoPago::factory()->create(['nombre' => 'Pago Móvil']);
+        GastoMensual::factory()
+            ->for(Gasto::factory()->state(['metodo_pago_id' => $metodo->id]))
+            ->create();
+
+        $this->actingAs($this->user)
+            ->get(route('gastos.index'))
+            ->assertOk()
+            ->assertSee('Pago Móvil')
+            ->assertDontSee('name="metodo_pago_id"', false);
+
+        $this->assertFalse(Route::has('gastos.metodo-pago'));
     }
 
     public function test_monthly_view_shows_pending_total_by_metodo_pago(): void
@@ -137,7 +158,7 @@ final class GastoMetodoPagoTest extends TestCase
         $pagoMovil = MetodoPago::factory()->create(['nombre' => 'Pago Móvil']);
 
         $this->crearMensual(['servicio' => 'Netflix', 'monto' => 14, 'metodo_pago_id' => $zelle->id]);
-        $this->crearMensual(['servicio' => 'Luz', 'monto' => 20, 'metodo_pago_id' => $zelle->id], ['metodo_pago_id' => $pagoMovil->id]);
+        $this->crearMensual(['servicio' => 'Luz', 'monto' => 20, 'metodo_pago_id' => $pagoMovil->id]);
         $this->crearMensual(['servicio' => 'Spotify', 'monto' => 11.5, 'metodo_pago_id' => $zelle->id], ['pagado' => true]);
         $this->crearMensual(['servicio' => 'Vultr', 'monto' => 5]);
 
