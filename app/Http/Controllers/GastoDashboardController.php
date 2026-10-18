@@ -9,82 +9,37 @@ use App\Models\Gasto;
 use App\Models\GastoMensual;
 use App\Models\MetodoPago;
 use App\Services\BcvService;
+use App\Services\ResumenMensualService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class GastoDashboardController extends Controller
 {
     public function __construct(
         private readonly BcvService $bcvService,
+        private readonly ResumenMensualService $resumenes,
     ) {}
 
     public function index(Request $request): View
     {
-        $mes = (int) $request->query('mes', (string) Carbon::now()->month);
-        $anio = (int) $request->query('anio', (string) Carbon::now()->year);
+        $periodo = $request->validate([
+            'mes' => ['nullable', 'integer', 'between:1,12'],
+            'anio' => ['nullable', 'integer', 'between:2000,2100'],
+        ]);
 
-        $this->generarMesSiNoExiste($mes, $anio);
+        $resumen = $this->resumenes->delMes(
+            (int) ($periodo['mes'] ?? Carbon::now()->month),
+            (int) ($periodo['anio'] ?? Carbon::now()->year),
+        );
 
-        $mensuales = GastoMensual::with(['gasto.metodoPago', 'metodoPago'])
-            ->where('mes', $mes)
-            ->where('anio', $anio)
-            ->get()
-            ->sortBy(fn (GastoMensual $gm) => $gm->gasto->dia_pago)
-            ->values();
-
-        $totalUsd = $mensuales->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'USD')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
-        $pagadoUsd = $mensuales->where('pagado', true)->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'USD')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
-        $pendienteUsd = $totalUsd - $pagadoUsd;
-
-        $totalBs = $mensuales->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'VES')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
-        $pagadoBs = $mensuales->where('pagado', true)->filter(fn (GastoMensual $gm) => ($gm->gasto->moneda ?? 'USD') === 'VES')->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0));
-        $pendienteBs = $totalBs - $pagadoBs;
-
-        $hoy = Carbon::now();
-        $diaActual = $hoy->day;
-
-        $proximos = $mensuales->filter(function (GastoMensual $gm) use ($diaActual, $mes, $anio, $hoy) {
-            if ($gm->pagado) {
-                return false;
-            }
-            if ($mes !== $hoy->month || $anio !== $hoy->year) {
-                return false;
-            }
-            $dia = $gm->gasto->dia_pago;
-
-            return $dia >= $diaActual && $dia <= ($diaActual + 3);
-        });
-
-        $vencidos = $mensuales->filter(function (GastoMensual $gm) use ($diaActual, $mes, $anio, $hoy) {
-            if ($gm->pagado) {
-                return false;
-            }
-            if ($mes !== $hoy->month || $anio !== $hoy->year) {
-                return false;
-            }
-
-            return $gm->gasto->dia_pago < $diaActual;
-        });
-
-        $meses = [
-            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
-            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
-            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
-        ];
-
-        $tasaBcv = $this->bcvService->obtenerTasaUsd();
-        $pendientePorMetodo = $this->pendientePorMetodo($mensuales);
-
-        return view('gastos.index', compact(
-            'mensuales', 'totalUsd', 'pagadoUsd', 'pendienteUsd',
-            'totalBs', 'pagadoBs', 'pendienteBs',
-            'proximos', 'vencidos', 'mes', 'anio', 'meses', 'tasaBcv',
-            'pendientePorMetodo'
-        ));
+        return view('gastos.index', [
+            'resumen' => $resumen,
+            'tasaBcv' => $this->bcvService->obtenerTasaUsd(),
+        ]);
     }
 
     public function servicios(): View
@@ -170,45 +125,12 @@ final class GastoDashboardController extends Controller
             ->with('success', "Comprobante subido para '{$mensual->gasto->servicio}'.");
     }
 
-    public function verComprobante(GastoMensual $mensual): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function verComprobante(GastoMensual $mensual): StreamedResponse
     {
         if (! $mensual->comprobante_path || ! Storage::disk('public')->exists($mensual->comprobante_path)) {
             abort(404, 'Comprobante no encontrado.');
         }
 
         return Storage::disk('public')->download($mensual->comprobante_path);
-    }
-
-    /**
-     * @param  Collection<int, GastoMensual>  $mensuales
-     * @return Collection<string, float>
-     */
-    private function pendientePorMetodo(Collection $mensuales): Collection
-    {
-        return $mensuales
-            ->reject(fn (GastoMensual $gm) => $gm->pagado)
-            ->groupBy(fn (GastoMensual $gm) => $gm->metodoPagoAplicado()?->nombre ?? 'Sin método')
-            ->map(fn (Collection $grupo) => (float) $grupo->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0)))
-            ->filter(fn (float $total) => $total > 0)
-            ->sortDesc();
-    }
-
-    private function generarMesSiNoExiste(int $mes, int $anio): void
-    {
-        $existe = GastoMensual::where('mes', $mes)->where('anio', $anio)->exists();
-
-        if ($existe) {
-            return;
-        }
-
-        $gastos = Gasto::where('activo', true)->get();
-
-        foreach ($gastos as $gasto) {
-            GastoMensual::create([
-                'gasto_id' => $gasto->id,
-                'mes' => $mes,
-                'anio' => $anio,
-            ]);
-        }
     }
 }

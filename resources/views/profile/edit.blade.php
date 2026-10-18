@@ -1,188 +1,132 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Mi Perfil</h1>
-            <p class="text-sm text-slate-500 mt-1">Administra tu información personal y seguridad</p>
-        </div>
-    </x-slot>
+@php
+    $erroresPassword = $errors->updatePassword;
+    $erroresEliminacion = $errors->userDeletion;
+@endphp
 
-    <div class="space-y-6 max-w-2xl">
+<x-app-layout title="Mi perfil">
+    <x-ui.page-header title="Mi perfil" subtitle="Tu información, apariencia y seguridad" />
 
-        {{-- Alerts --}}
-        @if(session('status') === 'profile-updated')
-            <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200/60 text-emerald-700 px-4 py-3 rounded-xl text-sm">
-                <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Perfil actualizado correctamente.
-            </div>
-        @endif
-
-        @if(session('status') === 'password-updated')
-            <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200/60 text-emerald-700 px-4 py-3 rounded-xl text-sm">
-                <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Contraseña actualizada correctamente. Las demás sesiones han sido cerradas.
-            </div>
-        @endif
-
-        {{-- Profile info card --}}
-        <div class="bg-white rounded-2xl border border-slate-200/60 p-6">
-            <div class="flex items-center gap-2 mb-6">
-                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    <div class="grid gap-5 lg:grid-cols-3">
+        <div class="space-y-5">
+            <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-6 text-white shadow-xl shadow-violet-500/20 dark:shadow-none">
+                <div class="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10"></div>
+                <div class="relative flex items-center gap-4">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-lg font-bold backdrop-blur">
+                        {{ \App\Support\Paleta::iniciales($user->name) }}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="truncate text-lg font-bold">{{ $user->name }}</p>
+                        <p class="truncate text-sm text-white/75">{{ $user->email }}</p>
+                    </div>
                 </div>
-                <h3 class="text-base font-semibold text-slate-900">Información Personal</h3>
-            </div>
+            </section>
 
-            <form method="POST" action="{{ route('profile.update') }}" class="space-y-4">
-                @csrf
-                @method('PATCH')
-
-                <div>
-                    <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nombre</label>
-                    <input type="text" name="name" id="name" required autofocus autocomplete="name"
-                        value="{{ old('name', $user->name) }}"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5 @error('name') border-rose-400 bg-rose-50 @enderror">
-                    @error('name')
-                        <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
+            <x-ui.card x-data data-appearance>
+                <h2 class="font-semibold text-slate-900 dark:text-white">Apariencia</h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Elige cómo se ve la aplicación en este dispositivo.</p>
+                <div class="mt-4 grid grid-cols-3 gap-2">
+                    @foreach (['sistema' => ['Sistema', 'pantalla'], 'claro' => ['Claro', 'sol'], 'oscuro' => ['Oscuro', 'luna']] as $valor => [$etiqueta, $icono])
+                        <button type="button" @click="$store.tema.elegir('{{ $valor }}')" data-theme-option="{{ $valor }}"
+                            :class="$store.tema.preferencia === '{{ $valor }}'
+                                ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-300 dark:ring-indigo-400'
+                                : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800'"
+                            class="flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-xs font-semibold transition">
+                            <x-icon :name="$icono" class="h-5 w-5" />
+                            {{ $etiqueta }}
+                        </button>
+                    @endforeach
                 </div>
+            </x-ui.card>
 
-                <div>
-                    <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Correo electrónico</label>
-                    <input type="email" name="email" id="email" required autocomplete="username"
-                        value="{{ old('email', $user->email) }}"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5 @error('email') border-rose-400 bg-rose-50 @enderror">
-                    @error('email')
-                        <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between">
-                    <p class="text-xs text-slate-400">Nombre y correo electrónico</p>
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 active:bg-emerald-700 transition-colors shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Guardar perfil
-                    </button>
-                </div>
-            </form>
+            <x-ui.card class="lg:hidden">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <x-ui.button variant="secondary" icon="salir" class="w-full">Cerrar sesión</x-ui.button>
+                </form>
+            </x-ui.card>
         </div>
 
-        {{-- Change password card --}}
-        <div class="bg-white rounded-2xl border border-slate-200/60 p-6">
-            <div class="flex items-center gap-2 mb-6">
-                <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <div class="space-y-5 lg:col-span-2">
+            <x-ui.card>
+                <div class="mb-5 flex items-center gap-3">
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"><x-icon name="usuario" class="h-5 w-5" /></span>
+                    <h2 class="font-semibold text-slate-900 dark:text-white">Información personal</h2>
                 </div>
-                <h3 class="text-base font-semibold text-slate-900">Cambiar Contraseña</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-5">Usa una contraseña larga y aleatoria para mantener tu cuenta segura. Al cambiarla, todas las demás sesiones activas serán cerradas.</p>
+                <form method="POST" action="{{ route('profile.update') }}">
+                    @csrf
+                    @method('PATCH')
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <x-ui.field label="Nombre" for="name" :error="$errors->first('name')">
+                            <x-ui.input type="text" name="name" id="name" required autocomplete="name" :value="old('name', $user->name)" :invalid="$errors->has('name')" />
+                        </x-ui.field>
+                        <x-ui.field label="Correo electrónico" for="email" :error="$errors->first('email')">
+                            <x-ui.input type="email" name="email" id="email" required autocomplete="username" :value="old('email', $user->email)" :invalid="$errors->has('email')" />
+                        </x-ui.field>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <x-ui.button icon="check">Guardar perfil</x-ui.button>
+                    </div>
+                </form>
+            </x-ui.card>
 
-            <form method="POST" action="{{ route('password.update') }}" class="space-y-4">
-                @csrf
-                @method('PUT')
-
-                <div>
-                    <label for="current_password" class="block text-sm font-medium text-slate-700 mb-1.5">Contraseña actual</label>
-                    <input type="password" name="current_password" id="current_password" autocomplete="current-password"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5 @error('current_password', 'updatePassword') border-rose-400 bg-rose-50 @enderror">
-                    @error('current_password', 'updatePassword')
-                        <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
+            <x-ui.card>
+                <div class="mb-2 flex items-center gap-3">
+                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"><x-icon name="candado" class="h-5 w-5" /></span>
+                    <h2 class="font-semibold text-slate-900 dark:text-white">Cambiar contraseña</h2>
                 </div>
+                <p class="mb-5 text-sm text-slate-500 dark:text-slate-400">Al cambiarla se cerrarán las demás sesiones activas.</p>
+                <form method="POST" action="{{ route('password.update') }}">
+                    @csrf
+                    @method('PUT')
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <x-ui.field label="Contraseña actual" for="current_password" :error="$erroresPassword->first('current_password')">
+                            <x-ui.input type="password" name="current_password" id="current_password" autocomplete="current-password" :invalid="$erroresPassword->has('current_password')" />
+                        </x-ui.field>
+                        <x-ui.field label="Nueva contraseña" for="password" :error="$erroresPassword->first('password')">
+                            <x-ui.input type="password" name="password" id="password" autocomplete="new-password" :invalid="$erroresPassword->has('password')" />
+                        </x-ui.field>
+                        <x-ui.field label="Confirmar" for="password_confirmation" :error="$erroresPassword->first('password_confirmation')">
+                            <x-ui.input type="password" name="password_confirmation" id="password_confirmation" autocomplete="new-password" />
+                        </x-ui.field>
+                    </div>
+                    <div class="mt-5 flex justify-end">
+                        <x-ui.button icon="candado">Actualizar contraseña</x-ui.button>
+                    </div>
+                </form>
+            </x-ui.card>
 
-                <div>
-                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Nueva contraseña</label>
-                    <input type="password" name="password" id="password" autocomplete="new-password"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5 @error('password', 'updatePassword') border-rose-400 bg-rose-50 @enderror">
-                    @error('password', 'updatePassword')
-                        <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="password_confirmation" class="block text-sm font-medium text-slate-700 mb-1.5">Confirmar nueva contraseña</label>
-                    <input type="password" name="password_confirmation" id="password_confirmation" autocomplete="new-password"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5 @error('password_confirmation', 'updatePassword') border-rose-400 bg-rose-50 @enderror">
-                    @error('password_confirmation', 'updatePassword')
-                        <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between">
-                    <p class="text-xs text-slate-400">Contraseña actual requerida</p>
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 active:bg-amber-700 transition-colors shadow-sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        Actualizar contraseña
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        {{-- Danger zone --}}
-        <div class="bg-white rounded-2xl border border-rose-200/60 p-6">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                </div>
-                <h3 class="text-base font-semibold text-rose-700">Zona de Peligro</h3>
-            </div>
-            <p class="text-sm text-slate-500 mb-5">Una vez eliminada tu cuenta, todos los datos serán borrados permanentemente. Esta acción no se puede deshacer.</p>
-
-            <button
-                onclick="document.getElementById('modal-delete').classList.remove('hidden')"
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-rose-300 text-rose-600 text-sm font-semibold rounded-xl hover:bg-rose-50 transition-colors"
-            >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                Eliminar cuenta
-            </button>
-        </div>
-
-    </div>
-
-    {{-- Delete confirmation modal --}}
-    <div id="modal-delete" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-slate-900">¿Eliminar tu cuenta?</h3>
-                    <p class="text-sm text-slate-500">Esta acción es irreversible.</p>
-                </div>
-            </div>
-
-            <p class="text-sm text-slate-600 mb-5">Ingresa tu contraseña para confirmar que deseas eliminar permanentemente tu cuenta y todos sus datos.</p>
-
-            <form method="POST" action="{{ route('profile.destroy') }}" class="space-y-4">
-                @csrf
-                @method('DELETE')
-
-                <div>
-                    <label for="delete_password" class="block text-sm font-medium text-slate-700 mb-1.5">Contraseña</label>
-                    <input type="password" name="password" id="delete_password" autocomplete="current-password" placeholder="Tu contraseña actual"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-rose-500/20 focus:border-rose-500 py-2.5 @error('password', 'userDeletion') border-rose-400 bg-rose-50 @enderror">
-                    @error('password', 'userDeletion')
-                        <p class="mt-1.5 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
+            <x-ui.card class="!ring-rose-200 dark:!ring-rose-500/20" x-data="{ confirmando: {{ $erroresEliminacion->isNotEmpty() ? 'true' : 'false' }} }">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="font-semibold text-rose-600 dark:text-rose-400">Eliminar cuenta</h2>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Se borrarán todos tus datos de forma permanente.</p>
+                    </div>
+                    <x-ui.button type="button" variant="secondary" icon="papelera" class="!text-rose-600 dark:!text-rose-400" @click="confirmando = true">Eliminar cuenta</x-ui.button>
                 </div>
 
-                <div class="flex items-center justify-end gap-3 pt-2">
-                    <button type="button"
-                        onclick="document.getElementById('modal-delete').classList.add('hidden')"
-                        class="inline-flex items-center px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-600 text-white text-sm font-semibold rounded-xl hover:bg-rose-700 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        Sí, eliminar cuenta
-                    </button>
+                <div x-show="confirmando" x-cloak x-transition.opacity class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-4 backdrop-blur-sm sm:items-center" @keydown.escape.window="confirmando = false">
+                    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900 dark:ring-1 dark:ring-slate-800" @click.outside="confirmando = false">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"><x-icon name="alerta" class="h-5 w-5" /></span>
+                            <div>
+                                <h3 class="font-semibold text-slate-900 dark:text-white">¿Eliminar tu cuenta?</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Esta acción es irreversible.</p>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ route('profile.destroy') }}" class="mt-5">
+                            @csrf
+                            @method('DELETE')
+                            <x-ui.field label="Contraseña" for="delete_password" :error="$erroresEliminacion->first('password')">
+                                <x-ui.input type="password" name="password" id="delete_password" autocomplete="current-password" placeholder="Tu contraseña actual" :invalid="$erroresEliminacion->has('password')" />
+                            </x-ui.field>
+                            <div class="mt-5 flex justify-end gap-2">
+                                <x-ui.button type="button" variant="ghost" @click="confirmando = false">Cancelar</x-ui.button>
+                                <x-ui.button variant="danger" icon="papelera">Sí, eliminar</x-ui.button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </form>
+            </x-ui.card>
         </div>
     </div>
-
-    @if($errors->userDeletion->isNotEmpty())
-    <script>document.getElementById('modal-delete').classList.remove('hidden');</script>
-    @endif
-
 </x-app-layout>
