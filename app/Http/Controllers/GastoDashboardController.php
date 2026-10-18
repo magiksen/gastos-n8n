@@ -78,13 +78,12 @@ final class GastoDashboardController extends Controller
 
         $tasaBcv = $this->bcvService->obtenerTasaUsd();
         $pendientePorMetodo = $this->pendientePorMetodo($mensuales);
-        $metodosPago = MetodoPago::orderBy('nombre')->get();
 
         return view('gastos.index', compact(
             'mensuales', 'totalUsd', 'pagadoUsd', 'pendienteUsd',
             'totalBs', 'pagadoBs', 'pendienteBs',
             'proximos', 'vencidos', 'mes', 'anio', 'meses', 'tasaBcv',
-            'pendientePorMetodo', 'metodosPago'
+            'pendientePorMetodo'
         ));
     }
 
@@ -141,9 +140,7 @@ final class GastoDashboardController extends Controller
         $mensual->update([
             'pagado' => $marcarPagado,
             'fecha_pago' => $marcarPagado ? Carbon::now()->toDateString() : null,
-            'metodo_pago_id' => $marcarPagado
-                ? ($mensual->metodo_pago_id ?? $mensual->gasto->metodo_pago_id)
-                : $mensual->metodo_pago_id,
+            'metodo_pago_id' => $marcarPagado ? $mensual->gasto->metodo_pago_id : null,
         ]);
 
         $estado = $mensual->pagado ? 'pagado' : 'pendiente';
@@ -180,18 +177,6 @@ final class GastoDashboardController extends Controller
         }
 
         return Storage::disk('public')->download($mensual->comprobante_path);
-    }
-
-    public function actualizarMetodoPago(Request $request, GastoMensual $mensual): RedirectResponse
-    {
-        $validated = $request->validate([
-            'metodo_pago_id' => ['nullable', 'integer', 'exists:metodos_pago,id'],
-        ]);
-
-        $mensual->update(['metodo_pago_id' => $validated['metodo_pago_id'] ?? null]);
-
-        return redirect()->back()
-            ->with('success', "Método de pago actualizado para '{$mensual->gasto->servicio}'.");
     }
 
     /**
