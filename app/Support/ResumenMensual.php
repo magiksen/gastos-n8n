@@ -130,6 +130,18 @@ final readonly class ResumenMensual
     }
 
     /**
+     * @return Collection<int, GastoMensual>
+     */
+    public function vencenHoy(): Collection
+    {
+        if (! $this->esMesActual()) {
+            return new Collection;
+        }
+
+        return $this->pendientes()->filter(fn (GastoMensual $gm) => $this->diasRestantes($gm) === 0)->values();
+    }
+
+    /**
      * @return Collection<string, float>
      */
     public function pendientePorMetodo(): Collection
@@ -195,7 +207,9 @@ final readonly class ResumenMensual
 
     private function diasRestantes(GastoMensual $mensual): int
     {
-        return $mensual->gasto->dia_pago - $this->hoy->day;
+        $diaDeVencimiento = min($mensual->gasto->dia_pago, $this->inicioDelMes()->daysInMonth);
+
+        return $diaDeVencimiento - $this->hoy->day;
     }
 
     /**

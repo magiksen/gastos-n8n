@@ -104,6 +104,27 @@ final class ResumenMensualTest extends TestCase
         $this->assertSame('Pagado el 02/10', $resumen->vencimientoDe($pagado));
     }
 
+    public function test_lists_unpaid_payments_due_today(): void
+    {
+        $venceHoy = $this->mensual(['dia_pago' => 15]);
+        $this->mensual(['dia_pago' => 15], ['pagado' => true]);
+        $this->mensual(['dia_pago' => 16]);
+
+        $this->assertSame([$venceHoy->id], $this->resumen()->vencenHoy()->pluck('id')->all());
+        $this->assertTrue($this->resumen(11, 2026)->vencenHoy()->isEmpty());
+    }
+
+    public function test_payment_day_beyond_month_length_is_due_on_last_day(): void
+    {
+        $this->travelTo(Carbon::create(2026, 11, 30, 10));
+        $mensual = $this->mensual(['dia_pago' => 31], ['mes' => 11]);
+
+        $resumen = $this->resumen(11, 2026);
+
+        $this->assertSame('Vence hoy', $resumen->vencimientoDe($mensual));
+        $this->assertSame([$mensual->id], $resumen->vencenHoy()->pluck('id')->all());
+    }
+
     public function test_items_are_sorted_by_payment_day(): void
     {
         $this->mensual(['servicio' => 'Luz', 'dia_pago' => 28]);

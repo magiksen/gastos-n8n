@@ -90,13 +90,7 @@ final class GastoDashboardController extends Controller
 
     public function togglePagado(GastoMensual $mensual): RedirectResponse
     {
-        $marcarPagado = ! $mensual->pagado;
-
-        $mensual->update([
-            'pagado' => $marcarPagado,
-            'fecha_pago' => $marcarPagado ? Carbon::now()->toDateString() : null,
-            'metodo_pago_id' => $marcarPagado ? $mensual->gasto->metodo_pago_id : null,
-        ]);
+        $mensual->pagado ? $mensual->marcarPendiente() : $mensual->marcarPagado();
 
         $estado = $mensual->pagado ? 'pagado' : 'pendiente';
 

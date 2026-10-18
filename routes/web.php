@@ -3,11 +3,16 @@
 use App\Http\Controllers\GastoDashboardController;
 use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelegramWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('gastos.index');
 });
+
+Route::post('/telegram/webhook', TelegramWebhookController::class)
+    ->middleware('throttle:60,1')
+    ->name('telegram.webhook');
 
 Route::get('/dashboard', function () {
     return redirect()->route('gastos.index');
