@@ -57,6 +57,7 @@
                 </div>
 
                 <div class="w-full max-w-sm">
+                    <x-flash-warning class="mb-6" />
                     {{ $slot }}
                 </div>
             </div>

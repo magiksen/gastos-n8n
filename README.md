@@ -94,20 +94,3 @@ docker exec gastos-app php artisan db:seed --force
 | `MAIL_PORT` | Puerto SMTP | `587` |
 | `MAIL_USERNAME` | Usuario SMTP | `tu@gmail.com` |
 | `MAIL_PASSWORD` | Password SMTP | `app-password` |
-| `API_TOKEN` | Token para API REST (opcional) | `openssl rand -hex 32` |
-
-## API REST (opcional)
-
-La API REST sigue disponible para integraciones externas. Requiere header `X-API-Token`.
-
-| Metodo | Endpoint | Descripcion |
-|--------|----------|-------------|
-| GET | `/api/gastos` | Listar servicios activos |
-| POST | `/api/gastos` | Agregar servicio |
-| DELETE | `/api/gastos/{id}` | Eliminar servicio |
-| GET | `/api/gastos/mensuales?mes=X&anio=Y` | Ver gastos del mes |
-| POST | `/api/gastos/generar-mes` | Generar entries del mes |
-| PUT | `/api/gastos/mensuales/{id}/pagar` | Marcar como pagado |
-| POST | `/api/gastos/mensuales/{id}/comprobante` | Subir comprobante |
-| GET | `/api/gastos/proximos?dias=3` | Pagos proximos |
-| GET | `/api/gastos/vencidos` | Pagos vencidos |
