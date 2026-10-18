@@ -61,7 +61,8 @@ final class ConfigurarTelegramTest extends TestCase
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://api.telegram.org/bot123:ABC/setWebhook'
             && $request['url'] === 'https://samupruebas.site/telegram/webhook'
             && $request['secret_token'] === $secreto[1]
-            && $request['allowed_updates'] === ['callback_query']);
+            && $request['allowed_updates'] === ['callback_query']
+            && $request['drop_pending_updates'] === true);
         Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/sendMessage')
             && $request['chat_id'] === 123456);
     }

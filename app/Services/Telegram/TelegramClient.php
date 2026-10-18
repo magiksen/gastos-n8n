@@ -6,6 +6,7 @@ namespace App\Services\Telegram;
 
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 
 final readonly class TelegramClient
@@ -13,6 +14,8 @@ final readonly class TelegramClient
     private const API = 'https://api.telegram.org/bot';
 
     private const SEGUNDOS_DE_ESPERA = 20;
+
+    private const SEGUNDOS_PARA_ARCHIVOS = 60;
 
     public function __construct(
         #[Config('services.telegram.token')] private ?string $token,
@@ -45,6 +48,18 @@ final readonly class TelegramClient
         }
 
         return $this->llamar('sendMessage', $datos)->successful();
+    }
+
+    public function enviarArchivo(int|string $chatId, string $ruta, string $texto): bool
+    {
+        return Http::timeout(self::SEGUNDOS_PARA_ARCHIVOS)
+            ->attach('document', File::get($ruta), basename($ruta))
+            ->post(self::API.$this->token.'/sendDocument', [
+                'chat_id' => (string) $chatId,
+                'caption' => $texto,
+                'parse_mode' => 'HTML',
+            ])
+            ->successful();
     }
 
     public function responderBoton(string $callbackId, string $texto): void
@@ -96,6 +111,7 @@ final readonly class TelegramClient
             'url' => $url,
             'secret_token' => $secreto,
             'allowed_updates' => ['callback_query'],
+            'drop_pending_updates' => true,
         ])->successful();
     }
 
