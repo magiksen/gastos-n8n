@@ -8,8 +8,8 @@ use App\Models\Gasto;
 use App\Models\GastoMensual;
 use App\Models\MetodoPago;
 use App\Models\User;
+use App\Support\ResumenMensual;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -166,7 +166,7 @@ final class GastoMetodoPagoTest extends TestCase
             ->get(route('gastos.index'))
             ->assertOk()
             ->assertSee('Pendiente por método de pago')
-            ->assertViewHas('pendientePorMetodo', fn (Collection $pendiente): bool => $pendiente->all() === [
+            ->assertViewHas('resumen', fn (ResumenMensual $resumen): bool => $resumen->pendientePorMetodo()->all() === [
                 'Pago Móvil' => 20.0,
                 'Zelle' => 14.0,
                 'Sin método' => 5.0,

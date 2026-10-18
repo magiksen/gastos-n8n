@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html {
+    color-scheme: light;
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+.cambiando-tema *,
+.cambiando-tema *::before,
+.cambiando-tema *::after {
+    transition: none !important;
+}
+
+[x-cloak] {
+    display: none !important;
+}

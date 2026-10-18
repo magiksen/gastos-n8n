@@ -1,151 +1,125 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Métodos de pago</h1>
-            <p class="text-sm text-slate-500 mt-1">Cuentas o medios con los que pagas tus servicios</p>
-        </div>
-    </x-slot>
+@php
+    $formularioAnterior = old('_formulario');
+    $campoConError = fn (string $formulario, string $campo) => $formularioAnterior === $formulario ? $errors->first($campo) : null;
+@endphp
 
-    <div class="space-y-6">
+<x-app-layout title="Métodos de pago">
+    <div x-data="{ creando: @js($formularioAnterior === 'crear') }">
+        <x-ui.page-header title="Métodos de pago" subtitle="Cuentas o medios con los que pagas tus servicios">
+            <x-slot:actions>
+                <x-ui.button type="button" icon="mas" @click="creando = ! creando" data-new-method>Nuevo método</x-ui.button>
+            </x-slot:actions>
+        </x-ui.page-header>
 
-        <div class="bg-white rounded-2xl border border-slate-200/60 p-6">
-            <div class="flex items-center gap-2 mb-5">
-                <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4.5 h-4.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <div x-show="creando" x-cloak x-transition.opacity class="mb-6">
+            <x-ui.card>
+                <div class="mb-5 flex items-center justify-between">
+                    <h2 class="font-semibold text-slate-900 dark:text-white">Nuevo método de pago</h2>
+                    <x-ui.icon-button icon="cerrar" label="Cerrar" @click="creando = false" />
                 </div>
-                <h3 class="text-base font-semibold text-slate-900">Agregar método de pago</h3>
+                <form method="POST" action="{{ route('metodos-pago.store') }}">
+                    @csrf
+                    <input type="hidden" name="_formulario" value="crear">
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <x-ui.field label="Nombre" for="nuevo-nombre" :error="$campoConError('crear', 'nombre')">
+                            <x-ui.input type="text" name="nombre" id="nuevo-nombre" required maxlength="100" placeholder="Ej: Zelle"
+                                :value="$formularioAnterior === 'crear' ? old('nombre') : null" :invalid="(bool) $campoConError('crear', 'nombre')" />
+                        </x-ui.field>
+                        <x-ui.field label="Detalle (opcional)" for="nuevo-detalle" :error="$campoConError('crear', 'detalle')" class="sm:col-span-2">
+                            <x-ui.input type="text" name="detalle" id="nuevo-detalle" maxlength="255" placeholder="Ej: Banesco terminada en 1234"
+                                :value="$formularioAnterior === 'crear' ? old('detalle') : null" />
+                        </x-ui.field>
+                    </div>
+                    <div class="mt-5 flex justify-end gap-2">
+                        <x-ui.button type="button" variant="ghost" @click="creando = false">Cancelar</x-ui.button>
+                        <x-ui.button icon="check">Guardar método</x-ui.button>
+                    </div>
+                </form>
+            </x-ui.card>
+        </div>
+
+        @if ($metodosPago->isEmpty())
+            <x-ui.card>
+                <x-ui.empty-state icon="tarjeta" title="Todavía no tienes métodos de pago" description="Registra Zelle, Pago Móvil, tarjetas o efectivo para saber con qué pagas cada servicio.">
+                    <x-ui.button type="button" icon="mas" @click="creando = true">Agregar el primero</x-ui.button>
+                </x-ui.empty-state>
+            </x-ui.card>
+        @else
+            <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach ($metodosPago as $metodo)
+                    @php($formulario = 'editar-'.$metodo->id)
+                    <div id="metodo-{{ $metodo->id }}" x-data="{ editando: @js($formularioAnterior === $formulario) }" data-method>
+                        <div x-show="! editando" @class([
+                            'relative flex aspect-[1.6/1] flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br p-5 text-white shadow-xl transition',
+                            \App\Support\Paleta::degradadoPara($metodo->nombre),
+                            'shadow-slate-900/10' => $metodo->activo,
+                            'opacity-50 grayscale' => ! $metodo->activo,
+                        ])>
+                            <div class="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/15"></div>
+                            <div class="pointer-events-none absolute -bottom-16 -left-6 h-40 w-40 rounded-full bg-black/10"></div>
+
+                            <div class="relative flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="truncate text-lg font-bold tracking-tight">{{ $metodo->nombre }}</p>
+                                    <p class="truncate text-sm text-white/75">{{ $metodo->detalle ?? 'Sin detalle' }}</p>
+                                </div>
+                                <div class="h-8 w-11 shrink-0 rounded-md bg-gradient-to-br from-amber-200 to-amber-400 opacity-90 shadow-inner"></div>
+                            </div>
+
+                            <div class="relative flex items-end justify-between gap-3">
+                                <div>
+                                    <p class="text-[11px] font-medium uppercase tracking-wider text-white/60">Servicios</p>
+                                    <p class="text-2xl font-bold">{{ $metodo->gastos_count }}</p>
+                                    @unless ($metodo->activo)
+                                        <span class="mt-1 inline-block rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-semibold">Inactivo</span>
+                                    @endunless
+                                </div>
+                                <div class="flex items-center gap-1 rounded-2xl bg-black/15 p-1 backdrop-blur">
+                                    <button type="button" @click="editando = true" title="Editar" aria-label="Editar {{ $metodo->nombre }}" class="flex h-8 w-8 items-center justify-center rounded-xl text-white/80 transition hover:bg-white/20 hover:text-white">
+                                        <x-icon name="lapiz" class="h-4 w-4" />
+                                    </button>
+                                    <form method="POST" action="{{ route('metodos-pago.toggle-activo', $metodo) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" title="{{ $metodo->activo ? 'Desactivar' : 'Activar' }}" aria-label="{{ $metodo->activo ? 'Desactivar' : 'Activar' }} {{ $metodo->nombre }}" class="flex h-8 w-8 items-center justify-center rounded-xl text-white/80 transition hover:bg-white/20 hover:text-white">
+                                            <x-icon name="encendido" class="h-4 w-4" />
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ route('metodos-pago.destroy', $metodo) }}" onsubmit="return confirm(@js('¿Eliminar '.$metodo->nombre.'?'))">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" title="Eliminar" aria-label="Eliminar {{ $metodo->nombre }}" class="flex h-8 w-8 items-center justify-center rounded-xl text-white/80 transition hover:bg-white/20 hover:text-white">
+                                            <x-icon name="papelera" class="h-4 w-4" />
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <x-ui.card x-show="editando" x-cloak>
+                            <form method="POST" action="{{ route('metodos-pago.update', $metodo) }}" class="flex h-full flex-col">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="_formulario" value="{{ $formulario }}">
+                                <div class="space-y-3">
+                                    <x-ui.field label="Nombre" :for="$formulario.'-nombre'" :error="$campoConError($formulario, 'nombre')">
+                                        <x-ui.input type="text" name="nombre" :id="$formulario.'-nombre'" required maxlength="100"
+                                            :value="$formularioAnterior === $formulario ? old('nombre') : $metodo->nombre" :invalid="(bool) $campoConError($formulario, 'nombre')" />
+                                    </x-ui.field>
+                                    <x-ui.field label="Detalle" :for="$formulario.'-detalle'">
+                                        <x-ui.input type="text" name="detalle" :id="$formulario.'-detalle'" maxlength="255"
+                                            :value="$formularioAnterior === $formulario ? old('detalle') : $metodo->detalle" />
+                                    </x-ui.field>
+                                </div>
+                                <div class="mt-auto flex justify-end gap-2 pt-4">
+                                    <x-ui.button type="button" variant="ghost" size="sm" @click="editando = false">Cancelar</x-ui.button>
+                                    <x-ui.button size="sm" icon="check">Guardar</x-ui.button>
+                                </div>
+                            </form>
+                        </x-ui.card>
+                    </div>
+                @endforeach
             </div>
-            <form method="POST" action="{{ route('metodos-pago.store') }}" class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-                @csrf
-                <div class="w-full sm:w-64">
-                    <label for="nombre" class="block text-sm font-medium text-slate-700 mb-1.5">Nombre</label>
-                    <input type="text" name="nombre" id="nombre" required maxlength="100" placeholder="Ej: Zelle"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5" value="{{ old('nombre') }}">
-                </div>
-                <div class="w-full sm:flex-1">
-                    <label for="detalle" class="block text-sm font-medium text-slate-700 mb-1.5">Detalle <span class="text-slate-400 font-normal">(opcional)</span></label>
-                    <input type="text" name="detalle" id="detalle" maxlength="255" placeholder="Ej: Banesco terminada en 1234"
-                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5" value="{{ old('detalle') }}">
-                </div>
-                <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 transition-colors shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    Agregar
-                </button>
-            </form>
-        </div>
-
-        <div class="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-semibold text-slate-900">Tus métodos de pago</h3>
-                    <span class="text-sm text-slate-500">{{ $metodosPago->count() }} métodos</span>
-                </div>
-            </div>
-
-            @if($metodosPago->isEmpty())
-                <p class="px-6 py-10 text-center text-sm text-slate-500">Todavía no tienes métodos de pago. Agrega el primero arriba.</p>
-            @else
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b border-slate-100">
-                                <th class="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
-                                <th class="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Detalle</th>
-                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Servicios</th>
-                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
-                                <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            @foreach($metodosPago as $metodo)
-                                <tr id="metodo-row-{{ $metodo->id }}" class="group hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3.5">
-                                        <span class="text-sm font-medium text-slate-900">{{ $metodo->nombre }}</span>
-                                    </td>
-                                    <td class="px-5 py-3.5">
-                                        <span class="text-sm text-slate-500">{{ $metodo->detalle ?? '—' }}</span>
-                                    </td>
-                                    <td class="px-5 py-3.5 text-center">
-                                        <span class="inline-flex items-center justify-center min-w-8 h-8 px-2 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">{{ $metodo->gastos_count }}</span>
-                                    </td>
-                                    <td class="px-5 py-3.5 text-center">
-                                        @if($metodo->activo)
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                Activo
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-500">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                                Inactivo
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-5 py-3.5 text-center">
-                                        <div class="flex items-center justify-center gap-1">
-                                            <button
-                                                onclick="document.getElementById('metodo-edit-{{ $metodo->id }}').classList.remove('hidden'); document.getElementById('metodo-row-{{ $metodo->id }}').classList.add('hidden')"
-                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                                                title="Editar"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                            </button>
-                                            <form method="POST" action="{{ route('metodos-pago.toggle-activo', $metodo) }}" class="inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                @if($metodo->activo)
-                                                    <button type="submit" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors" title="Desactivar">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                                                    </button>
-                                                @else
-                                                    <button type="submit" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Activar">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                    </button>
-                                                @endif
-                                            </form>
-                                            <form method="POST" action="{{ route('metodos-pago.destroy', $metodo) }}" class="inline" onsubmit="return confirm('¿Eliminar {{ $metodo->nombre }}?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Eliminar">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr id="metodo-edit-{{ $metodo->id }}" class="hidden">
-                                    <td colspan="5" class="px-5 py-4 bg-slate-50/50">
-                                        <form method="POST" action="{{ route('metodos-pago.update', $metodo) }}" class="flex flex-col sm:flex-row items-start sm:items-end gap-3">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="w-full sm:w-64">
-                                                <label class="block text-xs font-medium text-slate-500 mb-1">Nombre</label>
-                                                <input type="text" name="nombre" value="{{ $metodo->nombre }}" required maxlength="100" class="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-emerald-500/20 focus:border-emerald-500 py-2">
-                                            </div>
-                                            <div class="w-full sm:flex-1">
-                                                <label class="block text-xs font-medium text-slate-500 mb-1">Detalle</label>
-                                                <input type="text" name="detalle" value="{{ $metodo->detalle }}" maxlength="255" class="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-emerald-500/20 focus:border-emerald-500 py-2">
-                                            </div>
-                                            <div class="flex items-center gap-2 shrink-0">
-                                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 transition-colors">
-                                                    Guardar
-                                                </button>
-                                                <button type="button"
-                                                    onclick="document.getElementById('metodo-edit-{{ $metodo->id }}').classList.add('hidden'); document.getElementById('metodo-row-{{ $metodo->id }}').classList.remove('hidden')"
-                                                    class="inline-flex items-center px-4 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors"
-                                                >
-                                                    Cancelar
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-        </div>
-
+        @endif
     </div>
 </x-app-layout>
