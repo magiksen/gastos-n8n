@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        @include('partials.head', ['titulo' => config('app.name', 'Gastos').' · Acceso'])
+        @include('partials.head', ['titulo' => config('app.name').' · Acceso'])
     </head>
     <body class="bg-white font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
         <div class="flex min-h-screen">
@@ -14,7 +14,7 @@
                         <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
                             <x-icon name="billetera" class="h-6 w-6" />
                         </div>
-                        <span class="text-2xl font-bold tracking-tight">Gastos</span>
+                        <span class="text-2xl font-bold tracking-tight">{{ config('app.name') }}</span>
                     </div>
                     <h1 class="text-4xl font-extrabold leading-tight tracking-tight">Tus pagos del mes,<br>siempre bajo control.</h1>
                     <p class="mt-4 max-w-md text-lg text-white/75">Sabe cuánto te falta, qué vence pronto y cuánto es en bolívares a la tasa BCV del día.</p>
