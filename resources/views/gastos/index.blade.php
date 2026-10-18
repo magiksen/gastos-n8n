@@ -145,6 +145,23 @@
             </div>
         @endif
 
+        @if($pendientePorMetodo->isNotEmpty())
+            <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    <h3 class="text-sm font-semibold text-slate-700">Pendiente por método de pago</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    @foreach($pendientePorMetodo as $nombreMetodo => $totalPendiente)
+                        <div class="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-2.5">
+                            <span class="text-sm font-medium {{ $nombreMetodo === 'Sin método' ? 'text-slate-400' : 'text-slate-700' }}">{{ $nombreMetodo }}</span>
+                            <span class="text-sm font-semibold text-slate-900">${{ number_format($totalPendiente, 2) }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Alerts --}}
         @if($vencidos->count() > 0)
             <div class="bg-rose-50 border border-rose-200/60 rounded-2xl p-5">
@@ -201,6 +218,7 @@
                             <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Dia</th>
                             <th class="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto</th>
                             <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha Pago</th>
+                            <th class="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Método</th>
                             <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Comprobante</th>
                         </tr>
                     </thead>
@@ -247,6 +265,15 @@
                                         {{ $gm->fecha_pago ? $gm->fecha_pago->format('d/m/Y') : '—' }}
                                     </span>
                                 </td>
+                                <td class="px-5 py-3.5">
+                                    <form method="POST" action="{{ route('gastos.metodo-pago', $gm) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <x-metodo-pago-select :metodos="$metodosPago" :selected="$gm->metodoPagoAplicado()?->id"
+                                            onchange="this.form.submit()" aria-label="Método de pago de {{ $gm->gasto->servicio }}"
+                                            class="w-full min-w-36 rounded-lg border-slate-200 bg-white text-xs text-slate-700 focus:ring-emerald-500/20 focus:border-emerald-500 py-1.5" />
+                                    </form>
+                                </td>
                                 <td class="px-5 py-3.5 text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         @if($gm->comprobante_path)
@@ -263,7 +290,7 @@
                                 </td>
                             </tr>
                             <tr id="comprobante-{{ $gm->id }}" class="hidden">
-                                <td colspan="6" class="px-5 py-3 bg-slate-50/50">
+                                <td colspan="7" class="px-5 py-3 bg-slate-50/50">
                                     <form method="POST" action="{{ route('gastos.comprobante', $gm) }}" enctype="multipart/form-data" class="flex items-center gap-3">
                                         @csrf
                                         <input type="file" name="comprobante" accept="image/*" required class="text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-slate-900 file:text-white hover:file:bg-slate-800 file:cursor-pointer file:transition-colors">

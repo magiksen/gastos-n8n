@@ -58,6 +58,11 @@
                         <option value="VES" {{ old('moneda') === 'VES' ? 'selected' : '' }}>Bs</option>
                     </select>
                 </div>
+                <div class="w-full sm:w-44">
+                    <label for="metodo_pago_id" class="block text-sm font-medium text-slate-700 mb-1.5">Método de pago</label>
+                    <x-metodo-pago-select :metodos="$metodosPago" :selected="old('metodo_pago_id')" id="metodo_pago_id"
+                        class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 focus:ring-emerald-500/20 focus:border-emerald-500 py-2.5" />
+                </div>
                 <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white text-sm font-semibold rounded-xl hover:bg-emerald-600 transition-colors shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                     Agregar
@@ -80,6 +85,7 @@
                             <th class="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Servicio</th>
                             <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Dia</th>
                             <th class="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Monto</th>
+                            <th class="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Método</th>
                             <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
                             <th class="px-5 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                         </tr>
@@ -112,6 +118,9 @@
                                             <p class="text-[11px] text-amber-600 font-medium">Bs {{ number_format((float)$gasto->monto * $tasaBcv, 2) }}</p>
                                         @endif
                                     </div>
+                                </td>
+                                <td class="px-5 py-3.5">
+                                    <span class="text-sm {{ $gasto->metodoPago ? 'text-slate-700' : 'text-slate-400' }}">{{ $gasto->metodoPago?->nombre ?? '—' }}</span>
                                 </td>
                                 <td class="px-5 py-3.5 text-center">
                                     @if($gasto->activo)
@@ -160,7 +169,7 @@
                             </tr>
                             {{-- Edit row --}}
                             <tr id="edit-{{ $gasto->id }}" class="hidden">
-                                <td colspan="5" class="px-5 py-4 bg-slate-50/50">
+                                <td colspan="6" class="px-5 py-4 bg-slate-50/50">
                                     <form method="POST" action="{{ route('gastos.update', $gasto) }}" class="flex flex-col sm:flex-row items-start sm:items-end gap-3">
                                         @csrf
                                         @method('PUT')
@@ -182,6 +191,11 @@
                                                 <option value="USD" {{ ($gasto->moneda ?? 'USD') === 'USD' ? 'selected' : '' }}>$ USD</option>
                                                 <option value="VES" {{ ($gasto->moneda ?? 'USD') === 'VES' ? 'selected' : '' }}>Bs</option>
                                             </select>
+                                        </div>
+                                        <div class="w-full sm:w-40">
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Método de pago</label>
+                                            <x-metodo-pago-select :metodos="$metodosPago" :selected="$gasto->metodo_pago_id"
+                                                class="w-full rounded-xl border-slate-200 bg-white text-sm focus:ring-emerald-500/20 focus:border-emerald-500 py-2" />
                                         </div>
                                         <div class="flex items-center gap-2 shrink-0">
                                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-xl hover:bg-emerald-600 transition-colors">
