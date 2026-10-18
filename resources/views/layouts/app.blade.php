@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        @include('partials.head', ['titulo' => $title ? $title.' · Gastos' : null])
+        @include('partials.head', ['titulo' => $title ? $title.' · '.config('app.name') : null])
     </head>
     <body class="bg-slate-100 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
         <aside class="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col border-r border-slate-200/70 bg-white/80 backdrop-blur-xl lg:flex dark:border-slate-800 dark:bg-slate-900/80" data-sidebar>

@@ -5,7 +5,11 @@
 <meta name="turbo-refresh-scroll" content="preserve">
 <meta name="theme-color" content="#4f46e5">
 
-<title>{{ $titulo ?? config('app.name', 'Gastos') }}</title>
+<title>{{ $titulo ?? config('app.name') }}</title>
+
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <script>
     (() => {

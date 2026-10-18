@@ -9,7 +9,7 @@
         <x-icon name="billetera" @class(['h-5 w-5' => $size === 'md', 'h-6 w-6' => $size === 'lg']) />
     </div>
     <div class="leading-tight">
-        <p @class(['font-bold tracking-tight text-slate-900 dark:text-white', 'text-base' => $size === 'md', 'text-xl' => $size === 'lg'])>Gastos</p>
+        <p @class(['font-bold tracking-tight text-slate-900 dark:text-white', 'text-base' => $size === 'md', 'text-xl' => $size === 'lg'])>{{ config('app.name') }}</p>
         <p class="text-[11px] font-medium text-slate-400 dark:text-slate-500">Control mensual</p>
     </div>
 </div>

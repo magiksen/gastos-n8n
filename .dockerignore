@@ -11,4 +11,3 @@ storage/framework/views/*
 tests
 phpunit.xml
 README.md
-n8n-workflows

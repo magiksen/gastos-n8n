@@ -74,7 +74,7 @@
         </div>
 
         <div class="footer">
-            Gastos App — {{ config('app.url') }}
+            {{ config('app.name') }} — {{ config('app.url') }}
         </div>
     </div>
 </body>

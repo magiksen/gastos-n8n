@@ -1,4 +1,4 @@
-# Gastos App - Control de Gastos Mensuales
+# Mis Gastos - Control de Gastos Mensuales
 
 Sistema web para gestionar gastos mensuales con interfaz visual, autenticacion y notificaciones por email.
 
