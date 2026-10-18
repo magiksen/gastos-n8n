@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GastoRequest;
 use App\Models\Gasto;
 use App\Models\GastoMensual;
+use App\Models\MetodoPago;
 use App\Services\BcvService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -26,7 +29,7 @@ final class GastoDashboardController extends Controller
 
         $this->generarMesSiNoExiste($mes, $anio);
 
-        $mensuales = GastoMensual::with('gasto')
+        $mensuales = GastoMensual::with(['gasto.metodoPago', 'metodoPago'])
             ->where('mes', $mes)
             ->where('anio', $anio)
             ->get()
@@ -74,30 +77,29 @@ final class GastoDashboardController extends Controller
         ];
 
         $tasaBcv = $this->bcvService->obtenerTasaUsd();
+        $pendientePorMetodo = $this->pendientePorMetodo($mensuales);
+        $metodosPago = MetodoPago::orderBy('nombre')->get();
 
         return view('gastos.index', compact(
             'mensuales', 'totalUsd', 'pagadoUsd', 'pendienteUsd',
             'totalBs', 'pagadoBs', 'pendienteBs',
-            'proximos', 'vencidos', 'mes', 'anio', 'meses', 'tasaBcv'
+            'proximos', 'vencidos', 'mes', 'anio', 'meses', 'tasaBcv',
+            'pendientePorMetodo', 'metodosPago'
         ));
     }
 
     public function servicios(): View
     {
-        $gastos = Gasto::orderBy('dia_pago')->get();
+        $gastos = Gasto::with('metodoPago')->orderBy('dia_pago')->get();
         $tasaBcv = $this->bcvService->obtenerTasaUsd();
+        $metodosPago = MetodoPago::orderBy('nombre')->get();
 
-        return view('gastos.servicios', compact('gastos', 'tasaBcv'));
+        return view('gastos.servicios', compact('gastos', 'tasaBcv', 'metodosPago'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(GastoRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'servicio' => 'required|string|max:255',
-            'dia_pago' => 'required|integer|min:1|max:31',
-            'monto' => 'nullable|numeric|min:0',
-            'moneda' => 'required|in:USD,VES',
-        ]);
+        $validated = $request->validated();
 
         Gasto::create($validated);
 
@@ -105,16 +107,9 @@ final class GastoDashboardController extends Controller
             ->with('success', "Servicio '{$validated['servicio']}' agregado correctamente.");
     }
 
-    public function update(Request $request, Gasto $gasto): RedirectResponse
+    public function update(GastoRequest $request, Gasto $gasto): RedirectResponse
     {
-        $validated = $request->validate([
-            'servicio' => 'required|string|max:255',
-            'dia_pago' => 'required|integer|min:1|max:31',
-            'monto' => 'nullable|numeric|min:0',
-            'moneda' => 'required|in:USD,VES',
-        ]);
-
-        $gasto->update($validated);
+        $gasto->update($request->validated());
 
         return redirect()->route('gastos.servicios')
             ->with('success', "Servicio '{$gasto->servicio}' actualizado.");
@@ -141,9 +136,14 @@ final class GastoDashboardController extends Controller
 
     public function togglePagado(GastoMensual $mensual): RedirectResponse
     {
+        $marcarPagado = ! $mensual->pagado;
+
         $mensual->update([
-            'pagado' => ! $mensual->pagado,
-            'fecha_pago' => ! $mensual->pagado ? Carbon::now()->toDateString() : null,
+            'pagado' => $marcarPagado,
+            'fecha_pago' => $marcarPagado ? Carbon::now()->toDateString() : null,
+            'metodo_pago_id' => $marcarPagado
+                ? ($mensual->metodo_pago_id ?? $mensual->gasto->metodo_pago_id)
+                : $mensual->metodo_pago_id,
         ]);
 
         $estado = $mensual->pagado ? 'pagado' : 'pendiente';
@@ -180,6 +180,32 @@ final class GastoDashboardController extends Controller
         }
 
         return Storage::disk('public')->download($mensual->comprobante_path);
+    }
+
+    public function actualizarMetodoPago(Request $request, GastoMensual $mensual): RedirectResponse
+    {
+        $validated = $request->validate([
+            'metodo_pago_id' => ['nullable', 'integer', 'exists:metodos_pago,id'],
+        ]);
+
+        $mensual->update(['metodo_pago_id' => $validated['metodo_pago_id'] ?? null]);
+
+        return redirect()->back()
+            ->with('success', "Método de pago actualizado para '{$mensual->gasto->servicio}'.");
+    }
+
+    /**
+     * @param  Collection<int, GastoMensual>  $mensuales
+     * @return Collection<string, float>
+     */
+    private function pendientePorMetodo(Collection $mensuales): Collection
+    {
+        return $mensuales
+            ->reject(fn (GastoMensual $gm) => $gm->pagado)
+            ->groupBy(fn (GastoMensual $gm) => $gm->metodoPagoAplicado()?->nombre ?? 'Sin método')
+            ->map(fn (Collection $grupo) => (float) $grupo->sum(fn (GastoMensual $gm) => (float) ($gm->gasto->monto ?? 0)))
+            ->filter(fn (float $total) => $total > 0)
+            ->sortDesc();
     }
 
     private function generarMesSiNoExiste(int $mes, int $anio): void
