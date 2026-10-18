@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('bcv:actualizar-tasa')->dailyAt('23:00');
 Schedule::command('gastos:resumen-diario')->dailyAt('08:00');
 Schedule::command('telegram:avisos')->dailyAt('08:00');
+Schedule::command('respaldos:crear')->dailyAt('03:00');
+Schedule::command('respaldos:enviar')->weeklyOn(0, '03:05');

@@ -11,6 +11,7 @@ Sistema web para gestionar gastos mensuales con interfaz visual, autenticacion y
 - **Generacion automatica** — Al entrar a un mes nuevo, se crean los gastos automaticamente
 - **Alertas visuales** — Pagos vencidos (rojo) y proximos en 3 dias (amarillo)
 - **Email diario (8 AM)** — Resumen de pagos vencidos y proximos
+- **Respaldos diarios (3 AM)** — Copia comprimida de la base, se guardan los ultimos 14 y cada domingo se envia la mas reciente por Telegram
 - **Login seguro** — Un solo usuario, registro deshabilitado
 
 ## Stack
@@ -79,6 +80,24 @@ docker run -d --name gastos-app --restart unless-stopped \
   -v gastos-storage:/var/www/html/storage \
   gastos-app
 docker exec gastos-app php artisan db:seed --force
+```
+
+## Respaldos
+
+Los respaldos quedan en `storage/app/private/respaldos/` con el nombre `gastos-AAAA-MM-DD-HHMMSS.sqlite.gz`.
+
+```bash
+php artisan respaldos:crear
+php artisan respaldos:enviar
+```
+
+Para restaurar uno, deten el sitio, guarda la base actual y reemplazala con el respaldo descomprimido:
+
+```bash
+php artisan down
+cp database/database.sqlite database/database.sqlite.antes-de-restaurar
+gunzip -c storage/app/private/respaldos/gastos-2026-10-18-030000.sqlite.gz > database/database.sqlite
+php artisan up
 ```
 
 ## Variables de Entorno
