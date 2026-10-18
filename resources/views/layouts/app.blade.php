@@ -4,6 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="turbo-refresh-method" content="morph">
+        <meta name="turbo-refresh-scroll" content="preserve">
 
         <title>{{ config('app.name', 'Gastos') }}</title>
 
@@ -110,10 +112,11 @@
 
                 {{-- Page content --}}
                 <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6">
-                    <x-flash-warning class="mb-6" />
                     {{ $slot }}
                 </main>
             </div>
         </div>
+
+        <x-toasts />
     </body>
 </html>
