@@ -1,6 +1,6 @@
 # Mis Gastos - Control de Gastos Mensuales
 
-Sistema web para gestionar gastos mensuales con interfaz visual, autenticacion y notificaciones por email.
+Sistema web para gestionar gastos mensuales con interfaz visual, autenticacion y avisos por Telegram.
 
 ## Funcionalidades
 
@@ -10,7 +10,7 @@ Sistema web para gestionar gastos mensuales con interfaz visual, autenticacion y
 - **Gestion de servicios** — Agrega, edita y elimina gastos fijos
 - **Generacion automatica** — Al entrar a un mes nuevo, se crean los gastos automaticamente
 - **Alertas visuales** — Pagos vencidos (rojo) y proximos en 3 dias (amarillo)
-- **Email diario (8 AM)** — Resumen de pagos vencidos y proximos
+- **Avisos por Telegram (8 AM)** — Resumen de pagos vencidos y proximos, alerta el dia del vencimiento y boton para marcar pagado
 - **Respaldos diarios (3 AM)** — Copia comprimida de la base, se guardan los ultimos 14 y cada domingo se envia la mas reciente por Telegram
 - **Login seguro** — Un solo usuario, registro deshabilitado
 
@@ -71,7 +71,6 @@ docker run -d --name gastos-app --restart unless-stopped \
   -e APP_URL=https://tu-dominio.com \
   -e ADMIN_EMAIL=tu@email.com \
   -e ADMIN_PASSWORD=tu-password \
-  -e NOTIFICATION_EMAIL=tu@email.com \
   -e MAIL_HOST=smtp.gmail.com \
   -e MAIL_PORT=587 \
   -e MAIL_USERNAME=tu@gmail.com \
@@ -107,7 +106,6 @@ php artisan up
 | `ADMIN_EMAIL` | Email del usuario admin | `admin@gastos.app` |
 | `ADMIN_PASSWORD` | Password del admin | `password` |
 | `ADMIN_NAME` | Nombre del admin | `Admin` |
-| `NOTIFICATION_EMAIL` | Email destino de notificaciones | `tu@email.com` |
 | `MAIL_MAILER` | Driver de correo | `smtp` |
 | `MAIL_HOST` | Servidor SMTP | `smtp.gmail.com` |
 | `MAIL_PORT` | Puerto SMTP | `587` |
