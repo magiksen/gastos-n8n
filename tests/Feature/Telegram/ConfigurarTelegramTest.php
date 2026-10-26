@@ -23,7 +23,7 @@ final class ConfigurarTelegramTest extends TestCase
         File::ensureDirectoryExists($this->carpetaEnv);
         File::put($this->carpetaEnv.'/.env', "APP_NAME=\"Mis Gastos\"\nTELEGRAM_CHAT_ID=viejo\n");
         $this->app->useEnvironmentPath($this->carpetaEnv);
-        config(['app.url' => 'https://samupruebas.site']);
+        config(['app.url' => 'https://magiksen.online']);
     }
 
     protected function tearDown(): void
@@ -59,7 +59,7 @@ final class ConfigurarTelegramTest extends TestCase
         preg_match('/^TELEGRAM_WEBHOOK_SECRET=(.+)$/m', $env, $secreto);
 
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://api.telegram.org/bot123:ABC/setWebhook'
-            && $request['url'] === 'https://samupruebas.site/telegram/webhook'
+            && $request['url'] === 'https://magiksen.online/telegram/webhook'
             && $request['secret_token'] === $secreto[1]
             && $request['allowed_updates'] === ['callback_query']
             && $request['drop_pending_updates'] === true);
