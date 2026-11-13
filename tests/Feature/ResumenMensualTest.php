@@ -35,6 +35,32 @@ final class ResumenMensualTest extends TestCase
         $this->assertDatabaseCount('gastos_mensuales', 1);
     }
 
+    public function test_adds_new_active_services_to_an_existing_month(): void
+    {
+        Gasto::factory()->create(['activo' => true]);
+        $this->resumen();
+
+        $nuevoGasto = Gasto::factory()->create([
+            'servicio' => 'Internet',
+            'activo' => true,
+        ]);
+
+        $resumen = $this->resumen();
+
+        $this->assertCount(2, $resumen->mensuales);
+        $this->assertTrue($resumen->mensuales->contains('gasto_id', $nuevoGasto->id));
+        $this->assertDatabaseHas('gastos_mensuales', [
+            'gasto_id' => $nuevoGasto->id,
+            'mes' => 10,
+            'anio' => 2026,
+            'pagado' => false,
+        ]);
+
+        $this->resumen();
+
+        $this->assertDatabaseCount('gastos_mensuales', 2);
+    }
+
     public function test_calculates_totals_and_progress(): void
     {
         $this->mensual(['monto' => 10]);
