@@ -27,12 +27,8 @@ final readonly class ResumenMensualService
 
     private function generarMesSiNoExiste(int $mes, int $anio): void
     {
-        if (GastoMensual::where('mes', $mes)->where('anio', $anio)->exists()) {
-            return;
-        }
-
         Gasto::where('activo', true)->each(function (Gasto $gasto) use ($mes, $anio): void {
-            GastoMensual::create([
+            GastoMensual::firstOrCreate([
                 'gasto_id' => $gasto->id,
                 'mes' => $mes,
                 'anio' => $anio,
